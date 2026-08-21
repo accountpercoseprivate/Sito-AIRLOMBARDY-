@@ -1,5 +1,7 @@
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from config import settings
 from routers import voli, prenotazioni, admin
 
@@ -11,33 +13,31 @@ app = FastAPI(
     redoc_url="/redoc"
 )
 
-# Configurazione CORS per abilitare le chiamate dal frontend Vanilla JS
+# Configurazione CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins if settings.cors_origins else ["*"],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Registrazione dei router modulari
+# Registrazione dei router API
 app.include_router(voli.router, prefix="/api/v1/voli", tags=["Tratte e Voli"])
 app.include_router(prenotazioni.router, prefix="/api/v1/prenotazioni", tags=["Prenotazioni & Check-in"])
 app.include_router(admin.router, prefix="/api/v1/admin", tags=["Amministrazione Flotta"])
 
-@app.get("/", tags=["Health Check"])
-async def root():
-    return {
-        "status": "online",
-        "ente": "LombardiAIR - Servizi di Trasporto Aereo Regionale",
-        "api_docs": "/docs",
-        "versione": "1.0.0"
-    }
-
+# Endpoint per UptimeRobot
 @app.get("/health", tags=["Health Check"])
 async def health():
     return {"status": "healthy"}
 
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+# Serve automaticamente il Frontend HTML/JS/CSS sulla radice "/"
+current_dir = os.path.dirname(os.path.abspath(__file__))
+frontend_dir = os.path.abspath(os.path.join(current_dir, "..", "frontend"))
+
+if not os.path.exists(frontend_dir):
+    frontend_dir = os.path.abspath(os.path.join(current_dir, "frontend"))
+
+if os.path.exists(frontend_dir):
+    app.mount("/", StaticFiles(directory=frontend_dir, html=True), name="frontend")
