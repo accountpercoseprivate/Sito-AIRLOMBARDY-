@@ -1,248 +1,204 @@
 <!DOCTYPE html>
-<html lang="it">
+<html lang="it" class="h-full">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>LombardiAIR | Navetta Regionale Milano ⇄ Monza</title>
+  <title>Area Riservata & Accesso | LombardiAIR</title>
 
-  <!-- Tailwind CSS & Supabase JS SDK via CDN -->
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <link rel="stylesheet" href="css/style.css" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+          },
+          colors: {
+            forest: {
+              950: '#03150b',
+              900: '#062414',
+              800: '#0a3820',
+            },
+            lime: {
+              400: '#72db1a',
+              500: '#61bd14',
+            }
+          }
+        }
+      }
+    }
+  </script>
 </head>
-<body class="bg-slate-50 min-h-screen flex flex-col justify-between">
+<body class="h-full font-sans antialiased relative flex items-center justify-center p-4 bg-forest-950 overflow-hidden">
 
-  <!-- Fascia Istituzionale Superiore -->
-  <header class="gov-topbar py-3.5 px-6 shadow-md text-white sticky top-0 z-50">
-    <div class="max-w-7xl mx-auto flex items-center justify-between">
-      <div class="flex items-center space-x-3">
-        <div class="w-9 h-9 rounded bg-lime-400 flex items-center justify-center font-black text-green-950 text-xl shadow">
+  <!-- ========================================================================= -->
+  <!-- SFONDO A TUTTO SCHERMO SFOCATO CON EFFETTI AMBIENTALI                      -->
+  <!-- ========================================================================= -->
+  <div class="absolute inset-0 z-0">
+    <img 
+      src="https://images.unsplash.com/photo-1506015391300-4802dc74de2e?auto=format&fit=crop&w=2200&q=85" 
+      alt="Airport at Twilight" 
+      class="w-full h-full object-cover object-center filter blur-md scale-110 brightness-50"
+    />
+    <div class="absolute inset-0 bg-gradient-to-t from-forest-950 via-forest-950/70 to-forest-950/90"></div>
+    <div class="absolute -top-40 -left-40 w-96 h-96 rounded-full bg-lime-500/20 filter blur-3xl"></div>
+    <div class="absolute -bottom-40 -right-40 w-96 h-96 rounded-full bg-emerald-600/20 filter blur-3xl"></div>
+  </div>
+
+  <!-- Tasto Torna alla Home in alto -->
+  <div class="absolute top-6 left-6 z-20">
+    <a href="index.html" class="inline-flex items-center space-x-2 text-xs font-extrabold text-slate-300 hover:text-white bg-white/10 hover:bg-white/15 border border-white/10 px-4 py-2 rounded-xl backdrop-blur-md transition-all">
+      <span>←</span>
+      <span>Torna alla Homepage</span>
+    </a>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- GLASSMORPHISM LOGIN CARD                                                  -->
+  <!-- ========================================================================= -->
+  <main class="relative z-10 max-w-md w-full my-auto">
+    <div class="bg-forest-900/65 backdrop-blur-2xl rounded-3xl p-8 sm:p-10 border border-white/15 shadow-[0_30px_70px_-15px_rgba(0,0,0,0.6)] text-white">
+      
+      <!-- Header Scheda con Logo -->
+      <div class="text-center mb-8">
+        <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-lime-400 to-lime-500 text-forest-950 font-black text-2xl shadow-xl shadow-lime-500/30 mb-4">
           L
         </div>
-        <div>
-          <a href="index.html" class="text-xl font-bold tracking-tight hover:text-lime-300">LombardiAIR</a>
-          <p class="text-[10px] text-slate-300 tracking-wider uppercase font-semibold">Navetta Aerea Regionale Milano ⇄ Monza</p>
-        </div>
+        <h1 class="text-2xl font-black tracking-tight text-white">Portale LombardiAIR</h1>
+        <p class="text-xs text-slate-300 mt-1">Accedi con le tue credenziali certificate o registrati.</p>
       </div>
-      
-      <!-- Sezione Autenticazione Dinamica -->
-      <div id="navbar-auth-section" class="flex items-center space-x-4"></div>
-    </div>
-  </header>
 
-  <!-- Hero Section -->
-  <section class="relative bg-gradient-to-b from-[#072e1a] to-[#0c4327] text-white pt-12 pb-24 px-4 shadow-inner">
-    <div class="max-w-5xl mx-auto text-center mb-10">
-      <span class="inline-block bg-lime-400/20 text-lime-300 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider mb-3 border border-lime-400/30">
-        Collegamento Diretto Istituzionale
-      </span>
-      <h1 class="text-3xl md:text-5xl font-extrabold tracking-tight">
-        Il Ponte Aereo Milano ⇄ Monza
-      </h1>
-      <p class="mt-3 text-slate-300 text-sm md:text-base max-w-2xl mx-auto">
-        Voli navetta ad alta frequenza tra gli aeroporti milanesi (Linate e Malpensa) e l'hub di Monza. Check-in rapido e carta d'imbarco olografica 3D.
-      </p>
-    </div>
+      <!-- Tab Selettore Glass -->
+      <div class="flex p-1 rounded-2xl bg-white/10 border border-white/10 mb-6">
+        <button id="tab-login" class="flex-1 py-2.5 rounded-xl bg-lime-400 text-forest-950 text-xs font-extrabold shadow-sm transition-all">
+          Accedi
+        </button>
+        <button id="tab-register" class="flex-1 py-2.5 rounded-xl text-slate-300 hover:text-white text-xs font-bold transition-all">
+          Nuovo Passeggero
+        </button>
+      </div>
 
-    <!-- Pannello Ricerca Voli -->
-    <div class="max-w-5xl mx-auto bg-white rounded-2xl p-6 shadow-2xl text-slate-800 -mb-36 relative z-10 border border-slate-200">
-      <form id="form-search-flights" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <!-- FORM 1: ACCEDI -->
+      <form id="form-login" class="space-y-4">
         <div>
-          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Hub di Partenza</label>
-          <select id="search-origine" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm font-semibold focus:ring-2 focus:ring-lime-500 focus:outline-none">
-            <option value="">Tutti gli Hub</option>
-            <option value="LIN">Milano Linate (LIN)</option>
-            <option value="MXP">Milano Malpensa (MXP)</option>
-            <option value="MNZ">Monza Hub (MNZ)</option>
-          </select>
+          <label class="block text-[10px] font-extrabold text-slate-300 uppercase tracking-wider mb-1.5">Email Istituzionale o Personale</label>
+          <input 
+            type="email" 
+            required 
+            placeholder="nome@dominio.it" 
+            class="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/15 text-white placeholder-slate-400 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-lime-400 focus:bg-white/15 transition-all"
+          />
         </div>
 
         <div>
-          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Destinazione</label>
-          <select id="search-destinazione" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm font-semibold focus:ring-2 focus:ring-lime-500 focus:outline-none">
-            <option value="">Tutte le Destinazioni</option>
-            <option value="MNZ">Monza Hub (MNZ)</option>
-            <option value="LIN">Milano Linate (LIN)</option>
-            <option value="MXP">Milano Malpensa (MXP)</option>
-          </select>
+          <div class="flex items-center justify-between mb-1.5">
+            <label class="block text-[10px] font-extrabold text-slate-300 uppercase tracking-wider">Password</label>
+            <a href="#" class="text-[10px] font-bold text-lime-400 hover:underline">Hai dimenticato la password?</a>
+          </div>
+          <input 
+            type="password" 
+            required 
+            placeholder="••••••••" 
+            class="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/15 text-white placeholder-slate-400 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-lime-400 focus:bg-white/15 transition-all"
+          />
         </div>
 
-        <div>
-          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Data del Volo</label>
-          <input type="date" id="search-data" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm font-semibold focus:ring-2 focus:ring-lime-500 focus:outline-none" />
-        </div>
-
-        <div class="flex items-end">
-          <button type="submit" class="w-full btn-action-lime py-3 rounded-lg text-sm font-bold flex items-center justify-center space-x-2 shadow">
-            <span>Cerca Navette</span>
-            <span>→</span>
-          </button>
-        </div>
-      </form>
-    </div>
-  </section>
-
-  <!-- Sezione Risultati Voli -->
-  <main class="max-w-5xl mx-auto px-4 pt-44 pb-16 flex-grow w-full">
-    <div class="flex items-center justify-between mb-6">
-      <div>
-        <h2 class="text-2xl font-black text-slate-900">Tabellone Voli Operativi</h2>
-        <p class="text-sm text-slate-500">Tariffe fisse garantite e posti aggiornati in tempo reale</p>
-      </div>
-      <span id="flights-counter" class="text-xs font-bold text-green-900 bg-green-100 px-3 py-1 rounded-full">Caricamento...</span>
-    </div>
-
-    <!-- Lista Card Voli -->
-    <div id="flights-list" class="space-y-4">
-      <div class="p-8 text-center text-slate-400 bg-white rounded-xl border border-slate-200 animate-pulse font-medium">
-        Interrogazione dei radar di volo in corso...
-      </div>
-    </div>
-
-    <!-- Lookup Carta d'Imbarco via PNR -->
-    <div class="mt-16 bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6">
-      <div class="max-w-md">
-        <h3 class="text-lg font-bold text-slate-900">Recupera la tua Carta d'Imbarco 3D</h3>
-        <p class="text-xs text-slate-500 mt-1">Inserisci il codice PNR ricevuto alla prenotazione per visualizzare il biglietto interattivo o stamparlo.</p>
-      </div>
-      <form id="form-pnr-lookup" class="flex w-full md:w-auto gap-2">
-        <input type="text" id="pnr-input" required placeholder="Es. LM-8K9F2" 
-               class="px-4 py-2.5 uppercase tracking-widest text-sm font-bold border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-lime-500 w-full md:w-44" />
-        <button type="submit" class="bg-green-900 hover:bg-green-950 text-white px-5 py-2.5 rounded-lg text-sm font-bold transition">
-          Visualizza 3D
+        <button 
+          type="submit" 
+          class="w-full mt-2 py-3.5 rounded-xl bg-lime-400 hover:bg-lime-500 text-forest-950 font-black text-sm tracking-wide shadow-lg shadow-lime-500/25 hover:shadow-lime-500/40 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200"
+        >
+          Accedi ai Servizi Ufficiali
         </button>
       </form>
+
+      <!-- FORM 2: REGISTRAZIONE (Nascosto di Default) -->
+      <form id="form-register" class="space-y-4 hidden">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[10px] font-extrabold text-slate-300 uppercase tracking-wider mb-1.5">Nome</label>
+            <input 
+              type="text" 
+              required 
+              placeholder="Mario" 
+              class="w-full px-3.5 py-3 rounded-xl bg-white/10 border border-white/15 text-white placeholder-slate-400 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-lime-400 focus:bg-white/15 transition-all"
+            />
+          </div>
+          <div>
+            <label class="block text-[10px] font-extrabold text-slate-300 uppercase tracking-wider mb-1.5">Cognome</label>
+            <input 
+              type="text" 
+              required 
+              placeholder="Rossi" 
+              class="w-full px-3.5 py-3 rounded-xl bg-white/10 border border-white/15 text-white placeholder-slate-400 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-lime-400 focus:bg-white/15 transition-all"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[10px] font-extrabold text-slate-300 uppercase tracking-wider mb-1.5">Indirizzo Email</label>
+          <input 
+            type="email" 
+            required 
+            placeholder="mario.rossi@email.it" 
+            class="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/15 text-white placeholder-slate-400 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-lime-400 focus:bg-white/15 transition-all"
+          />
+        </div>
+
+        <div>
+          <label class="block text-[10px] font-extrabold text-slate-300 uppercase tracking-wider mb-1.5">Crea Password</label>
+          <input 
+            type="password" 
+            required 
+            minlength="6"
+            placeholder="Minimo 6 caratteri" 
+            class="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/15 text-white placeholder-slate-400 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-lime-400 focus:bg-white/15 transition-all"
+          />
+        </div>
+
+        <button 
+          type="submit" 
+          class="w-full mt-2 py-3.5 rounded-xl bg-lime-400 hover:bg-lime-500 text-forest-950 font-black text-sm tracking-wide shadow-lg shadow-lime-500/25 hover:shadow-lime-500/40 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200"
+        >
+          Completa Registrazione
+        </button>
+      </form>
+
+      <!-- Badge di Sicurezza Istituzionale -->
+      <div class="mt-8 pt-6 border-t border-white/10 flex items-center justify-center space-x-2 text-[11px] text-slate-400 font-medium">
+        <span class="text-lime-400">🛡️</span>
+        <span>Autenticazione Crittografata Supabase Auth</span>
+      </div>
+
     </div>
   </main>
 
-  <!-- Footer Istituzionale -->
-  <footer class="bg-[#041a0f] text-slate-400 border-t border-green-900/40 py-8 px-6 text-sm">
-    <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-      <div class="flex items-center space-x-2">
-        <div class="w-6 h-6 rounded bg-lime-400 text-green-950 font-black text-xs flex items-center justify-center">L</div>
-        <span class="text-white font-bold tracking-tight">LombardiAIR S.p.A.</span>
-        <span class="text-xs text-slate-500">| Navetta Aerea Regionale Milano ⇄ Monza</span>
-      </div>
-      <div class="flex space-x-6 text-xs text-slate-400">
-        <a href="admin.html" class="hover:text-lime-400">Portale Operatori B2B</a>
-        <a href="login.html" class="hover:text-lime-400">Area Riservata</a>
-      </div>
-    </div>
-  </footer>
+  <!-- Script Switch Tab Login / Registrazione -->
+  <script>
+    const tabLogin = document.getElementById('tab-login');
+    const tabRegister = document.getElementById('tab-register');
+    const formLogin = document.getElementById('form-login');
+    const formRegister = document.getElementById('form-register');
 
-  <!-- Script Applicativo -->
-  <script type="module">
-    import { apiFetch } from './js/config.js';
-    import { updateNavbarUI } from './js/auth.js';
-
-    const flightsList = document.getElementById('flights-list');
-    const flightsCounter = document.getElementById('flights-counter');
-    const searchForm = document.getElementById('form-search-flights');
-    const pnrForm = document.getElementById('form-pnr-lookup');
-
-    updateNavbarUI();
-
-    function formatTime(isoString) {
-      return new Date(isoString).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
-    }
-
-    function formatDate(isoString) {
-      return new Date(isoString).toLocaleDateString('it-IT', { weekday: 'short', day: '2-digit', month: 'short' });
-    }
-
-    async function loadFlights(filters = {}) {
-      try {
-        flightsList.innerHTML = `
-          <div class="p-8 text-center text-slate-400 bg-white rounded-xl border border-slate-200 animate-pulse font-medium">
-            Caricamento orari delle navette in corso...
-          </div>
-        `;
-
-        const queryParams = new URLSearchParams();
-        if (filters.origine) queryParams.append('origine', filters.origine);
-        if (filters.destinazione) queryParams.append('destinazione', filters.destinazione);
-        if (filters.data) queryParams.append('data', filters.data);
-
-        const flights = await apiFetch(`/voli?${queryParams.toString()}`);
-        flightsCounter.textContent = `${flights.length} ${flights.length === 1 ? 'navetta disponibile' : 'navette disponibili'}`;
-
-        if (!flights || flights.length === 0) {
-          flightsList.innerHTML = `
-            <div class="bg-white rounded-xl border border-slate-200 p-12 text-center text-slate-500">
-              <p class="font-bold text-lg text-slate-700">Nessuna navetta programmata per questa tratta.</p>
-              <p class="text-sm mt-1">Seleziona Milano (LIN/MXP) o Monza (MNZ).</p>
-            </div>
-          `;
-          return;
-        }
-
-        flightsList.innerHTML = flights.map(v => `
-          <div class="bg-white rounded-xl border border-slate-200 hover:border-lime-500 transition shadow-sm hover:shadow-md p-5 flex flex-col md:flex-row items-center justify-between gap-4">
-            
-            <div class="flex items-center space-x-6 w-full md:w-auto">
-              <div class="bg-slate-100 border border-slate-200 text-green-950 font-black px-3 py-2 rounded-lg text-sm text-center min-w-[85px]">
-                ${v.codice_volo}
-              </div>
-              <div class="flex items-center space-x-4">
-                <div class="text-center">
-                  <div class="text-xl font-black text-slate-900">${formatTime(v.data_ora_partenza)}</div>
-                  <div class="text-xs font-bold text-slate-500 uppercase">${v.aeroporto_origine}</div>
-                </div>
-                <div class="flex flex-col items-center px-2">
-                  <span class="text-[10px] text-slate-400 font-semibold uppercase">${formatDate(v.data_ora_partenza)}</span>
-                  <div class="w-16 h-0.5 bg-slate-300 relative my-1">
-                    <span class="absolute -top-1 right-0 text-[8px] text-slate-400">✈</span>
-                  </div>
-                  <span class="text-[10px] text-green-700 font-bold">15 min</span>
-                </div>
-                <div class="text-center">
-                  <div class="text-xl font-black text-slate-900">${formatTime(v.data_ora_arrivo)}</div>
-                  <div class="text-xs font-bold text-slate-500 uppercase">${v.aeroporto_destinazione}</div>
-                </div>
-              </div>
-            </div>
-
-            <div class="flex items-center justify-between md:justify-end space-x-6 w-full md:w-auto border-t md:border-t-0 pt-3 md:pt-0">
-              <div class="text-right">
-                <span class="text-xs font-semibold text-slate-400 block">Posti liberi: <b class="${v.posti_disponibili <= 5 ? 'text-red-600' : 'text-slate-700'}">${v.posti_disponibili}</b></span>
-                <span class="text-2xl font-black text-green-900">€ ${parseFloat(v.prezzo_base).toFixed(2)}</span>
-              </div>
-              <a href="booking.html?volo_id=${v.id}" class="btn-action-lime px-5 py-2.5 rounded-lg text-sm font-bold text-center block shadow">
-                Prenota
-              </a>
-            </div>
-
-          </div>
-        `).join('');
-
-      } catch (err) {
-        flightsList.innerHTML = `
-          <div class="bg-red-50 border border-red-200 text-red-700 p-6 rounded-xl text-center text-sm font-medium">
-            Errore caricamento: ${err.message}
-          </div>
-        `;
-        flightsCounter.textContent = 'Errore';
-      }
-    }
-
-    searchForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      loadFlights({
-        origine: document.getElementById('search-origine').value,
-        destinazione: document.getElementById('search-destinazione').value,
-        data: document.getElementById('search-data').value,
-      });
+    tabLogin.addEventListener('click', () => {
+      tabLogin.className = 'flex-1 py-2.5 rounded-xl bg-lime-400 text-forest-950 text-xs font-extrabold shadow-sm transition-all';
+      tabRegister.className = 'flex-1 py-2.5 rounded-xl text-slate-300 hover:text-white text-xs font-bold transition-all';
+      formLogin.classList.remove('hidden');
+      formRegister.classList.add('hidden');
     });
 
-    pnrForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const pnr = document.getElementById('pnr-input').value.trim().toUpperCase();
-      if (pnr) {
-        window.location.href = `boarding-pass.html?pnr=${encodeURIComponent(pnr)}`;
-      }
+    tabRegister.addEventListener('click', () => {
+      tabRegister.className = 'flex-1 py-2.5 rounded-xl bg-lime-400 text-forest-950 text-xs font-extrabold shadow-sm transition-all';
+      tabLogin.className = 'flex-1 py-2.5 rounded-xl text-slate-300 hover:text-white text-xs font-bold transition-all';
+      formRegister.classList.remove('hidden');
+      formLogin.classList.add('hidden');
     });
-
-    loadFlights();
   </script>
+
 </body>
 </html>
