@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Carta d'Imbarco Digitale 3D | LombardiAIR</title>
+  
+  <!-- CDN Tailwind, Three.js & Supabase JS SDK -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body class="bg-slate-100 min-h-screen flex flex-col justify-between">
+
+  <!-- Fascia Istituzionale Superiore -->
+  <header class="gov-topbar py-3.5 px-6 shadow-md text-white no-print">
+    <div class="max-w-6xl mx-auto flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-8 h-8 rounded bg-lime-400 flex items-center justify-center font-black text-green-950 text-lg">
+          L
+        </div>
+        <div>
+          <a href="index.html" class="text-xl font-bold tracking-tight hover:text-lime-300">LombardiAIR</a>
+          <p class="text-[10px] text-slate-300 uppercase font-semibold">Titolo di Viaggio Elettronico Ufficiale</p>
+        </div>
+      </div>
+      <a href="index.html" class="text-xs text-lime-400 hover:underline font-semibold">
+        ← Torna alla Ricerca Voli
+      </a>
+    </div>
+  </header>
+
+  <!-- Contenuto Principale -->
+  <main class="max-w-5xl mx-auto px-4 py-8 flex-grow w-full">
+    
+    <!-- Banner Successo Emissione -->
+    <div class="bg-white border-l-4 border-lime-500 rounded-r-xl shadow-sm p-4 mb-8 flex flex-col sm:flex-row items-center justify-between gap-4 no-print">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-full bg-lime-100 text-green-900 flex items-center justify-center font-black text-lg">
+          ✓
+        </div>
+        <div>
+          <h1 class="text-base font-bold text-slate-900">Prenotazione Confermata ed Emessa con Successo</h1>
+          <p class="text-xs text-slate-500">Codice PNR: <span id="pnr-badge" class="font-mono font-black text-green-900 tracking-wider">---</span></p>
+        </div>
+      </div>
+      <div class="flex space-x-3">
+        <button onclick="window.print()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-lg text-xs font-bold transition flex items-center space-x-1 border border-slate-300">
+          <span>🖨️ Stampa / Salva PDF</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Alert Box Errore -->
+    <div id="pnr-error" class="hidden p-6 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm font-semibold mb-6"></div>
+
+    <!-- SEZIONE 1: Visualizzatore 3D Interattivo -->
+    <section class="mb-10 no-print">
+      <div class="flex items-center justify-between mb-3">
+        <div>
+          <h2 class="text-lg font-black text-slate-900">Carta d'Imbarco Olografica 3D</h2>
+          <p class="text-xs text-slate-500">Trascina con il mouse o touch per ruotare ed esaminare il titolo di viaggio.</p>
+        </div>
+        <span class="text-xs font-bold text-lime-700 bg-lime-100 px-3 py-1 rounded-full border border-lime-300">
+          ● Three.js Canvas Attivo
+        </span>
+      </div>
+
+      <!-- Container Canvas 3D -->
+      <div id="canvas-3d-container" class="cursor-grab active:cursor-grabbing flex items-center justify-center text-white/50 text-sm">
+        Caricamento modello 3D del titolo di viaggio...
+      </div>
+    </section>
+
+    <!-- SEZIONE 2: Dettaglio Tecnico e Scheda d'Imbarco Ufficiale (Print-Ready) -->
+    <section class="bg-white rounded-2xl border-2 border-slate-300 p-6 md:p-8 shadow-sm">
+      <div class="border-b-2 border-green-900 pb-4 mb-6 flex items-center justify-between">
+        <div>
+          <h3 class="text-2xl font-black text-green-950 tracking-tight">LombardiAIR</h3>
+          <p class="text-xs text-slate-500 font-bold uppercase tracking-wider">Documento Elettronico di Volo Valido per l'Imbarco</p>
+        </div>
+        <div class="text-right">
+          <span class="text-xs text-slate-400 font-bold block">PNR (Codice Prenotazione)</span>
+          <span id="ticket-pnr" class="text-2xl font-black text-green-900 tracking-widest">---</span>
+        </div>
+      </div>
+
+      <!-- Griglia Dati del Biglietto -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-6 text-sm mb-8">
+        <div>
+          <span class="text-xs text-slate-400 font-bold uppercase block">Passeggero</span>
+          <span id="ticket-passenger" class="font-black text-slate-900 text-base">---</span>
+        </div>
+        <div>
+          <span class="text-xs text-slate-400 font-bold uppercase block">Documento Identità</span>
+          <span id="ticket-doc" class="font-bold text-slate-900 uppercase">---</span>
+        </div>
+        <div>
+          <span class="text-xs text-slate-400 font-bold uppercase block">Codice Volo</span>
+          <span id="ticket-flight" class="font-black text-green-900 text-base">---</span>
+        </div>
+        <div>
+          <span class="text-xs text-slate-400 font-bold uppercase block">Sedile Assegnato</span>
+          <span id="ticket-seat" class="font-black text-2xl text-lime-700 bg-lime-100 px-3 py-0.5 rounded inline-block">---</span>
+        </div>
+      </div>
+
+      <!-- Tratta & Orari -->
+      <div class="bg-slate-50 border border-slate-200 rounded-xl p-5 mb-8 flex flex-col md:flex-row items-center justify-between gap-6">
+        <div class="flex items-center space-x-6">
+          <div>
+            <div id="ticket-origin" class="text-3xl font-black text-slate-900">---</div>
+            <span class="text-xs text-slate-500 font-semibold">Aeroporto di Partenza</span>
+          </div>
+          <div class="text-2xl text-lime-600 font-bold">➔</div>
+          <div>
+            <div id="ticket-dest" class="text-3xl font-black text-slate-900">---</div>
+            <span class="text-xs text-slate-500 font-semibold">Aeroporto di Arrivo</span>
+          </div>
+        </div>
+
+        <div class="flex space-x-8 text-right">
+          <div>
+            <span class="text-xs text-slate-400 font-bold uppercase block">Orario Partenza</span>
+            <span id="ticket-time" class="font-black text-slate-900 text-lg">---</span>
+          </div>
+          <div>
+            <span class="text-xs text-slate-400 font-bold uppercase block">Gruppo Imbarco</span>
+            <span id="ticket-group" class="font-black text-green-900 text-lg">---</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Checklist Istruzioni per l'Aeroporto -->
+      <div class="border-t border-slate-200 pt-6">
+        <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-3">Informazioni di Sicurezza & Istruzioni</h4>
+        <ul class="text-xs text-slate-500 space-y-1.5 list-disc list-inside">
+          <li>Presentarsi al Gate d'imbarco almeno <b>30 minuti prima</b> dell'orario di partenza previsto.</li>
+          <li>Esibire la carta d'imbarco (su dispositivo mobile o stampata) unitamente al documento d'identità in corso di validità.</li>
+          <li>È consentito portare in cabina un bagaglio a mano standard conforme ai regolamenti regionali di sicurezza.</li>
+        </ul>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer Istituzionale -->
+  <footer class="bg-green-950 text-slate-400 py-4 text-center text-xs no-print">
+    © LombardiAIR S.p.A. - Biglietto Elettronico Emesso secondo standard IATA e Direttive Regionali.
+  </footer>
+
+  <!-- Script di Caricamento Dati & Inizializzazione 3D -->
+  <script type="module">
+    import { apiFetch } from './js/config.js';
+    import { renderBoardingPass3D } from './js/boarding-pass-3d.js';
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const pnr = urlParams.get('pnr');
+    const errorBox = document.getElementById('pnr-error');
+
+    if (!pnr) {
+      errorBox.textContent = "Nessun codice di prenotazione PNR fornito. Torna alla homepage.";
+      errorBox.classList.remove('hidden');
+    } else {
+      loadBoardingPass(pnr.trim().toUpperCase());
+    }
+
+    async function loadBoardingPass(codicePnr) {
+      try {
+        const data = await apiFetch(`/prenotazioni/${codicePnr}/carta-imbarco`);
+
+        // 1. Popola Dati UI
+        document.getElementById('pnr-badge').textContent = data.codice_prenotazione;
+        document.getElementById('ticket-pnr').textContent = data.codice_prenotazione;
+        document.getElementById('ticket-passenger').textContent = data.passeggero;
+        document.getElementById('ticket-doc').textContent = data.documento_identita;
+        document.getElementById('ticket-flight').textContent = data.codice_volo;
+        document.getElementById('ticket-seat').textContent = data.posto;
+        document.getElementById('ticket-origin').textContent = data.aeroporto_origine;
+        document.getElementById('ticket-dest').textContent = data.aeroporto_destinazione;
+        
+        const depDate = new Date(data.data_ora_partenza);
+        document.getElementById('ticket-time').textContent = `${depDate.toLocaleDateString('it-IT')} ${depDate.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}`;
+        document.getElementById('ticket-group').textContent = data.gruppo_imbarco;
+
+        // 2. Inizializza il Render 3D Three.js
+        renderBoardingPass3D('canvas-3d-container', data);
+
+      } catch (err) {
+        errorBox.textContent = `Impossibile recuperare il titolo di viaggio: ${err.message}`;
+        errorBox.classList.remove('hidden');
+        document.getElementById('canvas-3d-container').innerHTML = `
+          <div class="text-red-300 font-bold">Dati della carta d'imbarco non trovati.</div>
+        `;
+      }
+    }
+  </script>
+</body>
+</html>

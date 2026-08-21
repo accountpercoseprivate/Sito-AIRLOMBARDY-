@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pannello Amministrazione B2B | LombardiAIR</title>
+  
+  <!-- CDN Tailwind & Supabase JS SDK -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body class="bg-slate-100 min-h-screen flex flex-col justify-between">
+
+  <!-- Header Istituzionale Riservato -->
+  <header class="gov-topbar py-3.5 px-6 shadow-md text-white">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-8 h-8 rounded bg-lime-400 flex items-center justify-center font-black text-green-950 text-lg">
+          L
+        </div>
+        <div>
+          <div class="flex items-center space-x-2">
+            <span class="text-xl font-bold tracking-tight">LombardiAIR</span>
+            <span class="bg-lime-400 text-green-950 text-[10px] font-black uppercase px-2 py-0.5 rounded">Admin B2B</span>
+          </div>
+          <p class="text-[10px] text-slate-300 uppercase font-semibold">Cruscotto Direzionale e Controllo Flotta</p>
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-4">
+        <span id="admin-user-name" class="text-xs text-slate-200 font-medium">Verifica sessione...</span>
+        <button id="btn-admin-logout" class="text-xs bg-red-800/80 hover:bg-red-700 text-white font-bold px-3 py-1.5 rounded transition">
+          Esci
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Contenuto Dashboard -->
+  <main class="max-w-7xl mx-auto px-4 py-8 flex-grow w-full">
+    
+    <!-- BOX KPI / Statistiche Flotta -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block">Voli Registrati</span>
+        <span id="kpi-totale-voli" class="text-2xl font-black text-slate-900 mt-1 block">---</span>
+      </div>
+      <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block">Voli Operativi</span>
+        <span id="kpi-voli-attivi" class="text-2xl font-black text-green-700 mt-1 block">---</span>
+      </div>
+      <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block">Biglietti Venduti</span>
+        <span id="kpi-totale-prenotazioni" class="text-2xl font-black text-lime-700 mt-1 block">---</span>
+      </div>
+      <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block">Incasso Totale</span>
+        <span id="kpi-totale-incassi" class="text-2xl font-black text-slate-900 mt-1 block">€ 0.00</span>
+      </div>
+    </div>
+
+    <!-- Alert Box Notifiche -->
+    <div id="admin-alert" class="hidden mb-6 p-4 rounded-xl text-sm font-semibold"></div>
+
+    <!-- Selettore Sezioni: Flotta Voli vs Manifest Passeggeri -->
+    <div class="flex items-center justify-between border-b border-slate-200 mb-6">
+      <div class="flex space-x-6">
+        <button id="tab-voli" class="pb-3 text-sm font-black text-green-900 border-b-2 border-lime-500 transition">
+          ✈️ Gestione Flotta & Tratte
+        </button>
+        <button id="tab-passeggeri" class="pb-3 text-sm font-bold text-slate-400 hover:text-slate-700 transition">
+          📋 Manifest Passeggeri & Biglietti
+        </button>
+      </div>
+
+      <button id="btn-open-modal-volo" class="btn-action-lime px-4 py-2 rounded-lg text-xs font-black flex items-center space-x-1 shadow">
+        <span>+ Aggiungi Nuovo Volo</span>
+      </button>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- SEZIONE 1: TABELLA VOLI                                        -->
+    <!-- ============================================================== -->
+    <div id="section-voli" class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm">
+          <thead class="bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-500 uppercase tracking-wider">
+            <tr>
+              <th class="px-6 py-4">Codice</th>
+              <th class="px-6 py-4">Tratta</th>
+              <th class="px-6 py-4">Partenza / Arrivo</th>
+              <th class="px-6 py-4 text-center">Posti Disponibili</th>
+              <th class="px-6 py-4">Tariffa Base</th>
+              <th class="px-6 py-4">Stato</th>
+              <th class="px-6 py-4 text-right">Azioni</th>
+            </tr>
+          </thead>
+          <tbody id="table-voli-body" class="divide-y divide-slate-100 font-medium text-slate-700">
+            <tr>
+              <td colspan="7" class="px-6 py-8 text-center text-slate-400 animate-pulse">Caricamento tabella voli...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- SEZIONE 2: TABELLA MANIFEST PASSEGGERI                         -->
+    <!-- ============================================================== -->
+    <div id="section-passeggeri" class="hidden bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm">
+          <thead class="bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-500 uppercase tracking-wider">
+            <tr>
+              <th class="px-6 py-4">PNR</th>
+              <th class="px-6 py-4">Passeggero</th>
+              <th class="px-6 py-4">Documento</th>
+              <th class="px-6 py-4">Volo</th>
+              <th class="px-6 py-4">Posto</th>
+              <th class="px-6 py-4">Prezzo</th>
+              <th class="px-6 py-4">Data Emissione</th>
+              <th class="px-6 py-4">Stato</th>
+            </tr>
+          </thead>
+          <tbody id="table-passeggeri-body" class="divide-y divide-slate-100 font-medium text-slate-700">
+            <tr>
+              <td colspan="8" class="px-6 py-8 text-center text-slate-400 animate-pulse">Caricamento manifest passeggeri...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ============================================================== -->
+  <!-- MODAL: AGGIUNGI NUOVO VOLO                                     -->
+  <!-- ============================================================== -->
+  <div id="modal-nuovo-volo" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200">
+      <div class="flex items-center justify-between border-b border-slate-200 pb-3 mb-4">
+        <h3 class="text-lg font-black text-slate-900">Aggiungi Nuova Tratta alla Flotta</h3>
+        <button id="btn-close-modal" class="text-slate-400 hover:text-slate-600 font-bold text-lg">✕</button>
+      </div>
+
+      <form id="form-create-flight" class="space-y-4">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Codice Volo</label>
+            <input type="text" id="nuovo-codice" required placeholder="LMB-402" class="w-full p-2 border border-slate-300 rounded-lg text-sm font-bold uppercase" />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Posti Totali</label>
+            <input type="number" id="nuovo-posti" required value="180" min="10" max="500" class="w-full p-2 border border-slate-300 rounded-lg text-sm font-bold" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Origine (IATA)</label>
+            <select id="nuovo-origine" required class="w-full p-2 border border-slate-300 rounded-lg text-sm font-semibold">
+              <option value="MXP">Milano Malpensa (MXP)</option>
+              <option value="LIN">Milano Linate (LIN)</option>
+              <option value="BGY">Bergamo Orio (BGY)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Destinazione (IATA)</label>
+            <input type="text" id="nuovo-destinazione" required placeholder="FCO, CDG, LHR" maxlength="3" class="w-full p-2 border border-slate-300 rounded-lg text-sm font-bold uppercase" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Data & Ora Partenza</label>
+            <input type="datetime-local" id="nuovo-partenza" required class="w-full p-2 border border-slate-300 rounded-lg text-xs font-semibold" />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Data & Ora Arrivo</label>
+            <input type="datetime-local" id="nuovo-arrivo" required class="w-full p-2 border border-slate-300 rounded-lg text-xs font-semibold" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Prezzo Base (€)</label>
+          <input type="number" step="0.01" id="nuovo-prezzo" required placeholder="89.00" min="0" class="w-full p-2 border border-slate-300 rounded-lg text-sm font-bold" />
+        </div>
+
+        <div class="pt-3 flex justify-end space-x-3">
+          <button type="button" id="btn-cancel-modal" class="px-4 py-2 border border-slate-300 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-50">
+            Annulla
+          </button>
+          <button type="submit" id="btn-submit-flight" class="btn-action-lime px-6 py-2 rounded-lg text-xs font-black shadow">
+            Registra Volo
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Footer Istituzionale -->
+  <footer class="bg-green-950 text-slate-400 py-4 text-center text-xs">
+    © LombardiAIR S.p.A. - Area Riservata al Controllo di Gestione e Operativo.
+  </footer>
+
+  <!-- Caricamento Modulo JS Amministrazione -->
+  <script type="module" src="js/admin-dashboard.js"></script>
+</body>
+</html>

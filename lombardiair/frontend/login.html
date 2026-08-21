@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Accesso Servizi LombardiAIR | Portale Regionale</title>
+  
+  <!-- Tailwind CSS & Supabase JS SDK via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body class="bg-slate-50 min-h-screen flex flex-col justify-between">
+
+  <!-- Fascia Istituzionale Superiore -->
+  <header class="gov-topbar py-3 px-6 shadow-md text-white">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-8 h-8 rounded bg-lime-400 flex items-center justify-center font-black text-green-950 text-lg">
+          L
+        </div>
+        <div>
+          <a href="index.html" class="text-xl font-bold tracking-tight hover:text-lime-300">LombardiAIR</a>
+          <p class="text-xs text-slate-300 tracking-wider uppercase font-medium">Servizio di Trasporto Aereo Regionale</p>
+        </div>
+      </div>
+      <a href="index.html" class="text-xs text-lime-400 hover:underline font-semibold">
+        ← Torna alla Ricerca Voli
+      </a>
+    </div>
+  </header>
+
+  <!-- Contenitore Principale -->
+  <main class="flex-grow flex items-center justify-center px-4 py-12">
+    <div class="max-w-md w-full bg-white rounded-2xl shadow-xl border border-slate-200 p-8">
+      
+      <!-- Selettore Tab (Accedi / Registrati) -->
+      <div class="flex border-b border-slate-200 mb-6">
+        <button id="tab-login" class="flex-1 pb-3 text-sm font-bold text-green-900 border-b-2 border-lime-500 transition">
+          Accedi
+        </button>
+        <button id="tab-register" class="flex-1 pb-3 text-sm font-semibold text-slate-400 hover:text-slate-700 transition">
+          Nuovo Passeggero
+        </button>
+      </div>
+
+      <!-- Box Messaggi Feedback -->
+      <div id="alert-box" class="hidden mb-4 p-3.5 rounded-lg text-sm font-medium"></div>
+
+      <!-- FORM ACCEDI -->
+      <form id="form-login" class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Email Istituzionale o Personale</label>
+          <input type="email" id="login-email" required placeholder="nome@dominio.it" 
+                 class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-lime-500 text-sm font-medium" />
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Password</label>
+          <input type="password" id="login-password" required placeholder="••••••••" 
+                 class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-lime-500 text-sm font-medium" />
+        </div>
+        <button type="submit" id="btn-submit-login" class="w-full py-3 rounded-lg btn-action-lime text-sm font-bold shadow">
+          Accedi ai Servizi
+        </button>
+      </form>
+
+      <!-- FORM REGISTRAZIONE -->
+      <form id="form-register" class="space-y-4 hidden">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Nome</label>
+            <input type="text" id="reg-nome" required placeholder="Mario" 
+                   class="w-full px-3 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-lime-500 text-sm font-medium" />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Cognome</label>
+            <input type="text" id="reg-cognome" required placeholder="Rossi" 
+                   class="w-full px-3 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-lime-500 text-sm font-medium" />
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Indirizzo Email</label>
+          <input type="email" id="reg-email" required placeholder="mario.rossi@email.it" 
+                 class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-lime-500 text-sm font-medium" />
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Crea Password</label>
+          <input type="password" id="reg-password" required minlength="6" placeholder="Minimo 6 caratteri" 
+                 class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-lime-500 text-sm font-medium" />
+        </div>
+        <button type="submit" id="btn-submit-reg" class="w-full py-3 rounded-lg btn-action-lime text-sm font-bold shadow">
+          Completa Registrazione
+        </button>
+      </form>
+
+      <div class="mt-6 pt-4 border-t border-slate-100 text-center">
+        <p class="text-xs text-slate-500">
+          Autenticazione sicura protetta da crittografia regionale Supabase Auth.
+        </p>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Footer Istituzionale -->
+  <footer class="bg-green-950 text-slate-400 py-4 text-center text-xs">
+    © LombardiAIR S.p.A. - Tutti i diritti riservati. Infrastruttura Digitale di Trasporto.
+  </footer>
+
+  <!-- Script di Gestione Interfaccia & Autenticazione -->
+  <script type="module">
+    import { login, register, getUserProfile } from './js/auth.js';
+
+    const tabLogin = document.getElementById('tab-login');
+    const tabRegister = document.getElementById('tab-register');
+    const formLogin = document.getElementById('form-login');
+    const formRegister = document.getElementById('form-register');
+    const alertBox = document.getElementById('alert-box');
+
+    function showAlert(msg, isError = false) {
+      alertBox.textContent = msg;
+      alertBox.className = `mb-4 p-3.5 rounded-lg text-sm font-medium ${
+        isError ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-green-50 text-green-800 border border-green-200'
+      }`;
+      alertBox.classList.remove('hidden');
+    }
+
+    // Gestione Tab
+    tabLogin.addEventListener('click', () => {
+      tabLogin.classList.add('text-green-900', 'border-b-2', 'border-lime-500');
+      tabLogin.classList.remove('text-slate-400');
+      tabRegister.classList.remove('text-green-900', 'border-b-2', 'border-lime-500');
+      tabRegister.classList.add('text-slate-400');
+      formLogin.classList.remove('hidden');
+      formRegister.classList.add('hidden');
+      alertBox.classList.add('hidden');
+    });
+
+    tabRegister.addEventListener('click', () => {
+      tabRegister.classList.add('text-green-900', 'border-b-2', 'border-lime-500');
+      tabRegister.classList.remove('text-slate-400');
+      tabLogin.classList.remove('text-green-900', 'border-b-2', 'border-lime-500');
+      tabLogin.classList.add('text-slate-400');
+      formRegister.classList.remove('hidden');
+      formLogin.classList.add('hidden');
+      alertBox.classList.add('hidden');
+    });
+
+    // Submit Login
+    formLogin.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('login-email').value;
+      const password = document.getElementById('login-password').value;
+      const btn = document.getElementById('btn-submit-login');
+
+      try {
+        btn.disabled = true;
+        btn.textContent = 'Verifica in corso...';
+        await login(email, password);
+        
+        const profile = await getUserProfile();
+        const urlParams = new URLSearchParams(window.location.search);
+        const redirect = urlParams.get('redirect');
+
+        if (redirect) {
+          window.location.href = redirect;
+        } else if (profile?.ruolo === 'admin') {
+          window.location.href = 'admin.html';
+        } else {
+          window.location.href = 'index.html';
+        }
+      } catch (err) {
+        showAlert(err.message || 'Credenziali non valide.', true);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Accedi ai Servizi';
+      }
+    });
+
+    // Submit Registrazione
+    formRegister.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const nome = document.getElementById('reg-nome').value;
+      const cognome = document.getElementById('reg-cognome').value;
+      const email = document.getElementById('reg-email').value;
+      const password = document.getElementById('reg-password').value;
+      const btn = document.getElementById('btn-submit-reg');
+
+      try {
+        btn.disabled = true;
+        btn.textContent = 'Creazione profilo...';
+        await register(email, password, nome, cognome);
+        showAlert('Registrazione completata! Puoi effettuare il login.');
+        tabLogin.click();
+      } catch (err) {
+        showAlert(err.message || 'Errore nella registrazione.', true);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Completa Registrazione';
+      }
+    });
+  </script>
+</body>
+</html>
