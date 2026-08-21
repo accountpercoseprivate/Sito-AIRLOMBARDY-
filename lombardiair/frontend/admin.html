@@ -148,7 +148,7 @@
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Codice Volo</label>
-            <input type="text" id="nuovo-codice" required placeholder="LMB-402" class="w-full p-2 border border-slate-300 rounded-lg text-sm font-bold uppercase" />
+            <input type="text" id="nuovo-codice" required minlength="3" maxlength="10" placeholder="LMB-142" class="w-full p-2 border border-slate-300 rounded-lg text-sm font-bold uppercase" />
           </div>
           <div>
             <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Posti Totali</label>
@@ -160,14 +160,23 @@
           <div>
             <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Origine (IATA)</label>
             <select id="nuovo-origine" required class="w-full p-2 border border-slate-300 rounded-lg text-sm font-semibold">
-              <option value="MXP">Milano Malpensa (MXP)</option>
               <option value="LIN">Milano Linate (LIN)</option>
+              <option value="MXP">Milano Malpensa (MXP)</option>
+              <option value="MNZ">Monza Hub (MNZ)</option>
               <option value="BGY">Bergamo Orio (BGY)</option>
             </select>
           </div>
           <div>
             <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Destinazione (IATA)</label>
-            <input type="text" id="nuovo-destinazione" required placeholder="FCO, CDG, LHR" maxlength="3" class="w-full p-2 border border-slate-300 rounded-lg text-sm font-bold uppercase" />
+            <select id="nuovo-destinazione" required class="w-full p-2 border border-slate-300 rounded-lg text-sm font-semibold">
+              <option value="MNZ">Monza Hub (MNZ)</option>
+              <option value="LIN">Milano Linate (LIN)</option>
+              <option value="MXP">Milano Malpensa (MXP)</option>
+              <option value="BGY">Bergamo Orio (BGY)</option>
+              <option value="FCO">Roma Fiumicino (FCO)</option>
+              <option value="CDG">Parigi CDG (CDG)</option>
+              <option value="LHR">Londra Heathrow (LHR)</option>
+            </select>
           </div>
         </div>
 

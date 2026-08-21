@@ -1,5 +1,5 @@
 // =============================================================================
-// LOMBARDAIR - LOGICA CRUSCOTTO AMMINISTRATIVO B2B
+// LOMBARDAIR - LOGICA CRUSCOTTO AMMINISTRATIVO B2B (admin-dashboard.js)
 // =============================================================================
 
 import { apiFetch } from './config.js';
@@ -60,14 +60,16 @@ function formatDate(isoStr) {
 // =============================================================================
 
 async function initDashboard() {
-  // 1. Guard di sicurezza: solo utenti con ruolo 'admin'
+  // Guard di sicurezza: solo utenti con ruolo 'admin'
   const sessionData = await requireAuth('admin');
   if (!sessionData) return;
 
   const { profile } = sessionData;
-  userNameDisplay.textContent = `Operatore: ${profile.nome || ''} ${profile.cognome || ''} (Admin)`;
+  if (userNameDisplay) {
+    userNameDisplay.textContent = `Operatore: ${profile?.nome || 'Alessandro'} ${profile?.cognome || 'Di Blasio'} (Admin)`;
+  }
 
-  // 2. Carica statistiche e tabelle
+  // Carica statistiche e tabelle
   await Promise.all([
     loadStats(),
     loadFlightsTable(),
@@ -79,10 +81,12 @@ async function initDashboard() {
 async function loadStats() {
   try {
     const stats = await apiFetch('/admin/statistiche');
-    kpiTotVoli.textContent = stats.totale_voli_registrati;
-    kpiVoliAttivi.textContent = stats.voli_programmati;
-    kpiTotPrenotazioni.textContent = stats.biglietti_emessi;
-    kpiTotIncassi.textContent = `€ ${parseFloat(stats.incasso_complessivo_eur).toLocaleString('it-IT', { minimumFractionDigits: 2 })}`;
+    if (kpiTotVoli) kpiTotVoli.textContent = stats.totale_voli_registrati;
+    if (kpiVoliAttivi) kpiVoliAttivi.textContent = stats.voli_programmati;
+    if (kpiTotPrenotazioni) kpiTotPrenotazioni.textContent = stats.biglietti_emessi;
+    if (kpiTotIncassi) {
+      kpiTotIncassi.textContent = `€ ${parseFloat(stats.incasso_complessivo_eur).toLocaleString('it-IT', { minimumFractionDigits: 2 })}`;
+    }
   } catch (err) {
     console.error('Errore caricamento KPI:', err);
   }
@@ -95,7 +99,7 @@ async function loadFlightsTable() {
     if (!flights || flights.length === 0) {
       tableVoliBody.innerHTML = `
         <tr>
-          <td colspan="7" class="px-6 py-8 text-center text-slate-400">Nessun volo registrato al momento.</td>
+          <td colspan="7" class="px-6 py-8 text-center text-slate-400">Nessun volo registrato al momento. Clicca su "+ Aggiungi Nuovo Volo" per iniziare.</td>
         </tr>
       `;
       return;
@@ -133,7 +137,7 @@ async function loadFlightsTable() {
       </tr>
     `).join('');
 
-    // Event listeners cancellazione volo
+    // Event listeners per la cancellazione volo
     document.querySelectorAll('.btn-delete-volo').forEach(btn => {
       btn.addEventListener('click', async () => {
         const id = btn.getAttribute('data-id');
@@ -154,7 +158,7 @@ async function loadFlightsTable() {
   } catch (err) {
     tableVoliBody.innerHTML = `
       <tr>
-        <td colspan="7" class="px-6 py-6 text-center text-red-600">Errore: ${err.message}</td>
+        <td colspan="7" class="px-6 py-6 text-center text-red-600">Errore caricamento voli: ${err.message}</td>
       </tr>
     `;
   }
@@ -211,63 +215,69 @@ function toggleModal(show) {
   }
 }
 
-btnOpenModal.addEventListener('click', () => toggleModal(true));
-btnCloseModal.addEventListener('click', () => toggleModal(false));
-btnCancelModal.addEventListener('click', () => toggleModal(false));
+if (btnOpenModal) btnOpenModal.addEventListener('click', () => toggleModal(true));
+if (btnCloseModal) btnCloseModal.addEventListener('click', () => toggleModal(false));
+if (btnCancelModal) btnCancelModal.addEventListener('click', () => toggleModal(false));
 
-formCreateFlight.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  btnSubmitFlight.disabled = true;
-  btnSubmitFlight.textContent = 'Registrazione in corso...';
+if (formCreateFlight) {
+  formCreateFlight.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    btnSubmitFlight.disabled = true;
+    btnSubmitFlight.textContent = 'Registrazione in corso...';
 
-  try {
-    const payload = {
-      codice_volo: document.getElementById('nuovo-codice').value.trim().toUpperCase(),
-      aeroporto_origine: document.getElementById('nuovo-origine').value,
-      aeroporto_destinazione: document.getElementById('nuovo-destinazione').value.trim().toUpperCase(),
-      data_ora_partenza: new Date(document.getElementById('nuovo-partenza').value).toISOString(),
-      data_ora_arrivo: new Date(document.getElementById('nuovo-arrivo').value).toISOString(),
-      posti_totali: parseInt(document.getElementById('nuovo-posti').value, 10),
-      prezzo_base: parseFloat(document.getElementById('nuovo-prezzo').value)
-    };
+    try {
+      const payload = {
+        codice_volo: document.getElementById('nuovo-codice').value.trim().toUpperCase(),
+        aeroporto_origine: document.getElementById('nuovo-origine').value,
+        aeroporto_destinazione: document.getElementById('nuovo-destinazione').value.trim().toUpperCase(),
+        data_ora_partenza: new Date(document.getElementById('nuovo-partenza').value).toISOString(),
+        data_ora_arrivo: new Date(document.getElementById('nuovo-arrivo').value).toISOString(),
+        posti_totali: parseInt(document.getElementById('nuovo-posti').value, 10),
+        prezzo_base: parseFloat(document.getElementById('nuovo-prezzo').value)
+      };
 
-    await apiFetch('/admin/voli', {
-      method: 'POST',
-      body: JSON.stringify(payload)
-    });
+      await apiFetch('/admin/voli', {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      });
 
-    toggleModal(false);
-    showAlert(`Nuovo volo ${payload.codice_volo} aggiunto correttamente al tabellone.`);
-    await loadFlightsTable();
-    await loadStats();
-  } catch (err) {
-    alert(`Errore nella creazione del volo: ${err.message}`);
-  } finally {
-    btnSubmitFlight.disabled = false;
-    btnSubmitFlight.textContent = 'Registra Volo';
-  }
-});
+      toggleModal(false);
+      showAlert(`Nuovo volo ${payload.codice_volo} aggiunto correttamente al tabellone.`);
+      await loadFlightsTable();
+      await loadStats();
+    } catch (err) {
+      alert(`Errore nella creazione del volo: ${err.message}`);
+    } finally {
+      btnSubmitFlight.disabled = false;
+      btnSubmitFlight.textContent = 'Registra Volo';
+    }
+  });
+}
 
 // =============================================================================
 // GESTIONE TAB SEZIONI & LOGOUT
 // =============================================================================
 
-tabVoli.addEventListener('click', () => {
-  tabVoli.className = 'pb-3 text-sm font-black text-green-900 border-b-2 border-lime-500 transition';
-  tabPasseggeri.className = 'pb-3 text-sm font-bold text-slate-400 hover:text-slate-700 transition';
-  sectionVoli.classList.remove('hidden');
-  sectionPasseggeri.classList.add('hidden');
-});
+if (tabVoli) {
+  tabVoli.addEventListener('click', () => {
+    tabVoli.className = 'pb-3 text-sm font-black text-green-900 border-b-2 border-lime-500 transition';
+    tabPasseggeri.className = 'pb-3 text-sm font-bold text-slate-400 hover:text-slate-700 transition';
+    sectionVoli.classList.remove('hidden');
+    sectionPasseggeri.classList.add('hidden');
+  });
+}
 
-tabPasseggeri.addEventListener('click', () => {
-  tabPasseggeri.className = 'pb-3 text-sm font-black text-green-900 border-b-2 border-lime-500 transition';
-  tabVoli.className = 'pb-3 text-sm font-bold text-slate-400 hover:text-slate-700 transition';
-  sectionPasseggeri.classList.remove('hidden');
-  sectionVoli.classList.add('hidden');
-  loadPassengersTable();
-});
+if (tabPasseggeri) {
+  tabPasseggeri.addEventListener('click', () => {
+    tabPasseggeri.className = 'pb-3 text-sm font-black text-green-900 border-b-2 border-lime-500 transition';
+    tabVoli.className = 'pb-3 text-sm font-bold text-slate-400 hover:text-slate-700 transition';
+    sectionPasseggeri.classList.remove('hidden');
+    sectionVoli.classList.add('hidden');
+    loadPassengersTable();
+  });
+}
 
-btnLogout.addEventListener('click', logout);
+if (btnLogout) btnLogout.addEventListener('click', logout);
 
 // Avvio applicazione
 initDashboard();
