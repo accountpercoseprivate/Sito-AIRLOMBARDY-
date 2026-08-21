@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Area Riservata & Accesso | LombardiAIR</title>
 
-  <!-- Google Fonts: Inter -->
+  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -34,24 +34,25 @@
       }
     }
   </script>
+
+  <!-- Supabase JS Client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="h-full font-sans antialiased relative flex items-center justify-center p-4 bg-forest-950 overflow-hidden">
 
-  <!-- ========================================================================= -->
-  <!-- SFONDO A TUTTO SCHERMO SFOCATO CON EFFETTI AMBIENTALI                      -->
-  <!-- ========================================================================= -->
-  <div class="absolute inset-0 z-0">
+  <!-- SFONDO SFOCATO CON EFFETTI AMBIENTALI -->
+  <div class="absolute inset-0 z-0 pointer-events-none">
     <img 
       src="https://images.unsplash.com/photo-1506015391300-4802dc74de2e?auto=format&fit=crop&w=2200&q=85" 
-      alt="Airport at Twilight" 
-      class="w-full h-full object-cover object-center filter blur-md scale-110 brightness-50"
+      alt="Airport background" 
+      class="w-full h-full object-cover object-center filter blur-md scale-110 brightness-40"
     />
-    <div class="absolute inset-0 bg-gradient-to-t from-forest-950 via-forest-950/70 to-forest-950/90"></div>
+    <div class="absolute inset-0 bg-gradient-to-t from-forest-950 via-forest-950/80 to-forest-950/90"></div>
     <div class="absolute -top-40 -left-40 w-96 h-96 rounded-full bg-lime-500/20 filter blur-3xl"></div>
     <div class="absolute -bottom-40 -right-40 w-96 h-96 rounded-full bg-emerald-600/20 filter blur-3xl"></div>
   </div>
 
-  <!-- Tasto Torna alla Home in alto -->
+  <!-- Tasto Torna alla Home -->
   <div class="absolute top-6 left-6 z-20">
     <a href="index.html" class="inline-flex items-center space-x-2 text-xs font-extrabold text-slate-300 hover:text-white bg-white/10 hover:bg-white/15 border border-white/10 px-4 py-2 rounded-xl backdrop-blur-md transition-all">
       <span>←</span>
@@ -59,20 +60,21 @@
     </a>
   </div>
 
-  <!-- ========================================================================= -->
-  <!-- GLASSMORPHISM LOGIN CARD                                                  -->
-  <!-- ========================================================================= -->
+  <!-- LOGIN CARD -->
   <main class="relative z-10 max-w-md w-full my-auto">
-    <div class="bg-forest-900/65 backdrop-blur-2xl rounded-3xl p-8 sm:p-10 border border-white/15 shadow-[0_30px_70px_-15px_rgba(0,0,0,0.6)] text-white">
+    <div class="bg-forest-900/75 backdrop-blur-2xl rounded-3xl p-8 sm:p-10 border border-white/15 shadow-[0_30px_70px_-15px_rgba(0,0,0,0.6)] text-white">
       
       <!-- Header Scheda con Logo -->
-      <div class="text-center mb-8">
-        <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-lime-400 to-lime-500 text-forest-950 font-black text-2xl shadow-xl shadow-lime-500/30 mb-4">
+      <div class="text-center mb-6">
+        <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-lime-400 to-lime-500 text-forest-950 font-black text-2xl shadow-xl shadow-lime-500/30 mb-3">
           L
         </div>
         <h1 class="text-2xl font-black tracking-tight text-white">Portale LombardiAIR</h1>
         <p class="text-xs text-slate-300 mt-1">Accedi con le tue credenziali certificate o registrati.</p>
       </div>
+
+      <!-- Messaggio di Notifica / Errore -->
+      <div id="alert-box" class="hidden mb-4 p-3.5 rounded-xl text-xs font-semibold leading-snug border"></div>
 
       <!-- Tab Selettore Glass -->
       <div class="flex p-1 rounded-2xl bg-white/10 border border-white/10 mb-6">
@@ -89,9 +91,10 @@
         <div>
           <label class="block text-[10px] font-extrabold text-slate-300 uppercase tracking-wider mb-1.5">Email Istituzionale o Personale</label>
           <input 
+            id="login-email"
             type="email" 
             required 
-            placeholder="nome@dominio.it" 
+            placeholder="dibiasioalessandro56@gmail.com" 
             class="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/15 text-white placeholder-slate-400 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-lime-400 focus:bg-white/15 transition-all"
           />
         </div>
@@ -99,9 +102,9 @@
         <div>
           <div class="flex items-center justify-between mb-1.5">
             <label class="block text-[10px] font-extrabold text-slate-300 uppercase tracking-wider">Password</label>
-            <a href="#" class="text-[10px] font-bold text-lime-400 hover:underline">Hai dimenticato la password?</a>
           </div>
           <input 
+            id="login-password"
             type="password" 
             required 
             placeholder="••••••••" 
@@ -110,6 +113,7 @@
         </div>
 
         <button 
+          id="btn-login-submit"
           type="submit" 
           class="w-full mt-2 py-3.5 rounded-xl bg-lime-400 hover:bg-lime-500 text-forest-950 font-black text-sm tracking-wide shadow-lg shadow-lime-500/25 hover:shadow-lime-500/40 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200"
         >
@@ -117,12 +121,13 @@
         </button>
       </form>
 
-      <!-- FORM 2: REGISTRAZIONE (Nascosto di Default) -->
+      <!-- FORM 2: REGISTRAZIONE -->
       <form id="form-register" class="space-y-4 hidden">
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="block text-[10px] font-extrabold text-slate-300 uppercase tracking-wider mb-1.5">Nome</label>
             <input 
+              id="reg-nome"
               type="text" 
               required 
               placeholder="Mario" 
@@ -132,6 +137,7 @@
           <div>
             <label class="block text-[10px] font-extrabold text-slate-300 uppercase tracking-wider mb-1.5">Cognome</label>
             <input 
+              id="reg-cognome"
               type="text" 
               required 
               placeholder="Rossi" 
@@ -143,6 +149,7 @@
         <div>
           <label class="block text-[10px] font-extrabold text-slate-300 uppercase tracking-wider mb-1.5">Indirizzo Email</label>
           <input 
+            id="reg-email"
             type="email" 
             required 
             placeholder="mario.rossi@email.it" 
@@ -153,6 +160,7 @@
         <div>
           <label class="block text-[10px] font-extrabold text-slate-300 uppercase tracking-wider mb-1.5">Crea Password</label>
           <input 
+            id="reg-password"
             type="password" 
             required 
             minlength="6"
@@ -162,6 +170,7 @@
         </div>
 
         <button 
+          id="btn-reg-submit"
           type="submit" 
           class="w-full mt-2 py-3.5 rounded-xl bg-lime-400 hover:bg-lime-500 text-forest-950 font-black text-sm tracking-wide shadow-lg shadow-lime-500/25 hover:shadow-lime-500/40 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200"
         >
@@ -169,7 +178,7 @@
         </button>
       </form>
 
-      <!-- Badge di Sicurezza Istituzionale -->
+      <!-- Badge di Sicurezza -->
       <div class="mt-8 pt-6 border-t border-white/10 flex items-center justify-center space-x-2 text-[11px] text-slate-400 font-medium">
         <span class="text-lime-400">🛡️</span>
         <span>Autenticazione Crittografata Supabase Auth</span>
@@ -178,18 +187,39 @@
     </div>
   </main>
 
-  <!-- Script Switch Tab Login / Registrazione -->
+  <!-- LOGICA SUPABASE & AUTENTICAZIONE -->
   <script>
+    // ==========================================
+    // CONFIGURAZIONE SUPABASE
+    // (Inserisci qui l'URL e la Anon Key del tuo progetto Supabase)
+    // ==========================================
+    const SUPABASE_URL = "INSERISCI_QUI_IL_TUO_SUPABASE_URL";
+    const SUPABASE_ANON_KEY = "INSERISCI_QUI_LA_TUA_SUPABASE_ANON_KEY";
+
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // Riferimenti DOM
     const tabLogin = document.getElementById('tab-login');
     const tabRegister = document.getElementById('tab-register');
     const formLogin = document.getElementById('form-login');
     const formRegister = document.getElementById('form-register');
+    const alertBox = document.getElementById('alert-box');
 
+    // Funzione Mostra Notifiche
+    function showAlert(message, isError = true) {
+      alertBox.textContent = message;
+      alertBox.className = isError 
+        ? 'mb-4 p-3.5 rounded-xl text-xs font-bold leading-snug bg-red-500/20 border border-red-500/40 text-red-200 block'
+        : 'mb-4 p-3.5 rounded-xl text-xs font-bold leading-snug bg-lime-500/20 border border-lime-500/40 text-lime-200 block';
+    }
+
+    // Switch tra Tab Login e Registrazione
     tabLogin.addEventListener('click', () => {
       tabLogin.className = 'flex-1 py-2.5 rounded-xl bg-lime-400 text-forest-950 text-xs font-extrabold shadow-sm transition-all';
       tabRegister.className = 'flex-1 py-2.5 rounded-xl text-slate-300 hover:text-white text-xs font-bold transition-all';
       formLogin.classList.remove('hidden');
       formRegister.classList.add('hidden');
+      alertBox.classList.add('hidden');
     });
 
     tabRegister.addEventListener('click', () => {
@@ -197,6 +227,88 @@
       tabLogin.className = 'flex-1 py-2.5 rounded-xl text-slate-300 hover:text-white text-xs font-bold transition-all';
       formRegister.classList.remove('hidden');
       formLogin.classList.add('hidden');
+      alertBox.classList.add('hidden');
+    });
+
+    // 1. GESTIONE LOGIN
+    formLogin.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('login-email').value.trim();
+      const password = document.getElementById('login-password').value;
+      const btn = document.getElementById('btn-login-submit');
+
+      btn.disabled = true;
+      btn.innerText = "Accesso in corso...";
+
+      try {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: email,
+          password: password
+        });
+
+        if (error) throw error;
+
+        showAlert("Accesso effettuato! Reindirizzamento...", false);
+
+        // Controllo se l'utente è dibiasioalessandro56@gmail.com o Admin
+        const userEmail = data.user.email.toLowerCase();
+        
+        setTimeout(() => {
+          if (userEmail === 'dibiasioalessandro56@gmail.com') {
+            window.location.href = 'admin.html';
+          } else {
+            window.location.href = 'index.html';
+          }
+        }, 800);
+
+      } catch (err) {
+        showAlert("Errore di accesso: " + (err.message || "Credenziali errate"));
+        btn.disabled = false;
+        btn.innerText = "Accedi ai Servizi Ufficiali";
+      }
+    });
+
+    // 2. GESTIONE REGISTRAZIONE
+    formRegister.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const nome = document.getElementById('reg-nome').value.trim();
+      const cognome = document.getElementById('reg-cognome').value.trim();
+      const email = document.getElementById('reg-email').value.trim();
+      const password = document.getElementById('reg-password').value;
+      const btn = document.getElementById('btn-reg-submit');
+
+      btn.disabled = true;
+      btn.innerText = "Creazione account in corso...";
+
+      try {
+        const { data, error } = await supabase.auth.signUp({
+          email: email,
+          password: password,
+          options: {
+            data: {
+              nome: nome,
+              cognome: cognome
+            }
+          }
+        });
+
+        if (error) throw error;
+
+        showAlert("Registrazione completata con successo! Effettuo l'accesso...", false);
+
+        setTimeout(() => {
+          if (email.toLowerCase() === 'dibiasioalessandro56@gmail.com') {
+            window.location.href = 'admin.html';
+          } else {
+            window.location.href = 'index.html';
+          }
+        }, 1000);
+
+      } catch (err) {
+        showAlert("Errore durante la registrazione: " + err.message);
+        btn.disabled = false;
+        btn.innerText = "Completa Registrazione";
+      }
     });
   </script>
 
