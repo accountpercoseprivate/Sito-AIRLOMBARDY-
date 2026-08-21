@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>LombardiAIR | Compagnia Aerea Regionale Ufficiale</title>
+  <title>LombardiAIR | Navetta Regionale Milano ⇄ Monza</title>
 
   <!-- Tailwind CSS & Supabase JS SDK via CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -21,28 +21,26 @@
         </div>
         <div>
           <a href="index.html" class="text-xl font-bold tracking-tight hover:text-lime-300">LombardiAIR</a>
-          <p class="text-[10px] text-slate-300 tracking-wider uppercase font-semibold">Sistema di Connessione Aerea Regionale</p>
+          <p class="text-[10px] text-slate-300 tracking-wider uppercase font-semibold">Navetta Aerea Regionale Milano ⇄ Monza</p>
         </div>
       </div>
       
-      <!-- Sezione Autenticazione Dinamica (gestita da auth.js) -->
-      <div id="navbar-auth-section" class="flex items-center space-x-4">
-        <!-- Iniettato via JS -->
-      </div>
+      <!-- Sezione Autenticazione Dinamica -->
+      <div id="navbar-auth-section" class="flex items-center space-x-4"></div>
     </div>
   </header>
 
-  <!-- Hero Section con Motore di Ricerca -->
+  <!-- Hero Section -->
   <section class="relative bg-gradient-to-b from-[#072e1a] to-[#0c4327] text-white pt-12 pb-24 px-4 shadow-inner">
     <div class="max-w-5xl mx-auto text-center mb-10">
       <span class="inline-block bg-lime-400/20 text-lime-300 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider mb-3 border border-lime-400/30">
-        Flotta Istituzionale Regionale
+        Collegamento Diretto Istituzionale
       </span>
       <h1 class="text-3xl md:text-5xl font-extrabold tracking-tight">
-        Connettiamo la Lombardia con l'Europa.
+        Il Ponte Aereo Milano ⇄ Monza
       </h1>
       <p class="mt-3 text-slate-300 text-sm md:text-base max-w-2xl mx-auto">
-        Tratte dirette da Milano Malpensa, Milano Linate e Bergamo Orio al Serio. Prenotazioni garantite, trasparenza e carta d'imbarco 3D.
+        Voli navetta ad alta frequenza tra gli aeroporti milanesi (Linate e Malpensa) e l'hub di Monza. Check-in rapido e carta d'imbarco olografica 3D.
       </p>
     </div>
 
@@ -50,12 +48,12 @@
     <div class="max-w-5xl mx-auto bg-white rounded-2xl p-6 shadow-2xl text-slate-800 -mb-36 relative z-10 border border-slate-200">
       <form id="form-search-flights" class="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div>
-          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Origine</label>
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Hub di Partenza</label>
           <select id="search-origine" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm font-semibold focus:ring-2 focus:ring-lime-500 focus:outline-none">
-            <option value="">Tutti gli Hub Lombardi</option>
-            <option value="MXP">Milano Malpensa (MXP)</option>
+            <option value="">Tutti gli Hub</option>
             <option value="LIN">Milano Linate (LIN)</option>
-            <option value="BGY">Bergamo Orio (BGY)</option>
+            <option value="MXP">Milano Malpensa (MXP)</option>
+            <option value="MNZ">Monza Hub (MNZ)</option>
           </select>
         </div>
 
@@ -63,20 +61,20 @@
           <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Destinazione</label>
           <select id="search-destinazione" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm font-semibold focus:ring-2 focus:ring-lime-500 focus:outline-none">
             <option value="">Tutte le Destinazioni</option>
-            <option value="FCO">Roma Fiumicino (FCO)</option>
-            <option value="CDG">Parigi Charles de Gaulle (CDG)</option>
-            <option value="LHR">Londra Heathrow (LHR)</option>
+            <option value="MNZ">Monza Hub (MNZ)</option>
+            <option value="LIN">Milano Linate (LIN)</option>
+            <option value="MXP">Milano Malpensa (MXP)</option>
           </select>
         </div>
 
         <div>
-          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Data di Partenza</label>
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Data del Volo</label>
           <input type="date" id="search-data" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-sm font-semibold focus:ring-2 focus:ring-lime-500 focus:outline-none" />
         </div>
 
         <div class="flex items-end">
           <button type="submit" class="w-full btn-action-lime py-3 rounded-lg text-sm font-bold flex items-center justify-center space-x-2 shadow">
-            <span>Trova Voli</span>
+            <span>Cerca Navette</span>
             <span>→</span>
           </button>
         </div>
@@ -88,25 +86,24 @@
   <main class="max-w-5xl mx-auto px-4 pt-44 pb-16 flex-grow w-full">
     <div class="flex items-center justify-between mb-6">
       <div>
-        <h2 class="text-2xl font-black text-slate-900">Voli Disponibili</h2>
-        <p class="text-sm text-slate-500">Tariffe ufficiali e disponibilità aggiornate in tempo reale</p>
+        <h2 class="text-2xl font-black text-slate-900">Tabellone Voli Operativi</h2>
+        <p class="text-sm text-slate-500">Tariffe fisse garantite e posti aggiornati in tempo reale</p>
       </div>
       <span id="flights-counter" class="text-xs font-bold text-green-900 bg-green-100 px-3 py-1 rounded-full">Caricamento...</span>
     </div>
 
     <!-- Lista Card Voli -->
     <div id="flights-list" class="space-y-4">
-      <!-- Scheletro di caricamento -->
       <div class="p-8 text-center text-slate-400 bg-white rounded-xl border border-slate-200 animate-pulse font-medium">
-        Interrogazione dei sistemi aeroportuali in corso...
+        Interrogazione dei radar di volo in corso...
       </div>
     </div>
 
-    <!-- Recupero Rapido Carta d'Imbarco via PNR -->
+    <!-- Lookup Carta d'Imbarco via PNR -->
     <div class="mt-16 bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6">
       <div class="max-w-md">
-        <h3 class="text-lg font-bold text-slate-900">Hai già prenotato un volo?</h3>
-        <p class="text-xs text-slate-500 mt-1">Inserisci il codice di prenotazione PNR per visualizzare la tua carta d'imbarco 3D interattiva e procedere all'imbarco.</p>
+        <h3 class="text-lg font-bold text-slate-900">Recupera la tua Carta d'Imbarco 3D</h3>
+        <p class="text-xs text-slate-500 mt-1">Inserisci il codice PNR ricevuto alla prenotazione per visualizzare il biglietto interattivo o stamparlo.</p>
       </div>
       <form id="form-pnr-lookup" class="flex w-full md:w-auto gap-2">
         <input type="text" id="pnr-input" required placeholder="Es. LM-8K9F2" 
@@ -124,17 +121,16 @@
       <div class="flex items-center space-x-2">
         <div class="w-6 h-6 rounded bg-lime-400 text-green-950 font-black text-xs flex items-center justify-center">L</div>
         <span class="text-white font-bold tracking-tight">LombardiAIR S.p.A.</span>
-        <span class="text-xs text-slate-500">| Servizio di Trasporto Aereo Pubblico Regionale</span>
+        <span class="text-xs text-slate-500">| Navetta Aerea Regionale Milano ⇄ Monza</span>
       </div>
       <div class="flex space-x-6 text-xs text-slate-400">
         <a href="admin.html" class="hover:text-lime-400">Portale Operatori B2B</a>
-        <a href="#" class="hover:text-lime-400">Condizioni Generali di Trasporto</a>
-        <a href="#" class="hover:text-lime-400">Accessibilità</a>
+        <a href="login.html" class="hover:text-lime-400">Area Riservata</a>
       </div>
     </div>
   </footer>
 
-  <!-- Logica Applicativa Homepage -->
+  <!-- Script Applicativo -->
   <script type="module">
     import { apiFetch } from './js/config.js';
     import { updateNavbarUI } from './js/auth.js';
@@ -144,7 +140,6 @@
     const searchForm = document.getElementById('form-search-flights');
     const pnrForm = document.getElementById('form-pnr-lookup');
 
-    // Inizializza stato Navbar
     updateNavbarUI();
 
     function formatTime(isoString) {
@@ -159,7 +154,7 @@
       try {
         flightsList.innerHTML = `
           <div class="p-8 text-center text-slate-400 bg-white rounded-xl border border-slate-200 animate-pulse font-medium">
-            Aggiornamento tratte e tariffe in corso...
+            Caricamento orari delle navette in corso...
           </div>
         `;
 
@@ -168,16 +163,14 @@
         if (filters.destinazione) queryParams.append('destinazione', filters.destinazione);
         if (filters.data) queryParams.append('data', filters.data);
 
-        const url = `/voli?${queryParams.toString()}`;
-        const flights = await apiFetch(url);
-
-        flightsCounter.textContent = `${flights.length} ${flights.length === 1 ? 'volo trovato' : 'voli trovati'}`;
+        const flights = await apiFetch(`/voli?${queryParams.toString()}`);
+        flightsCounter.textContent = `${flights.length} ${flights.length === 1 ? 'navetta disponibile' : 'navette disponibili'}`;
 
         if (!flights || flights.length === 0) {
           flightsList.innerHTML = `
             <div class="bg-white rounded-xl border border-slate-200 p-12 text-center text-slate-500">
-              <p class="font-bold text-lg text-slate-700">Nessun volo programmato per i criteri selezionati.</p>
-              <p class="text-sm mt-1">Prova a cambiare data o hub di partenza.</p>
+              <p class="font-bold text-lg text-slate-700">Nessuna navetta programmata per questa tratta.</p>
+              <p class="text-sm mt-1">Seleziona Milano (LIN/MXP) o Monza (MNZ).</p>
             </div>
           `;
           return;
@@ -186,7 +179,6 @@
         flightsList.innerHTML = flights.map(v => `
           <div class="bg-white rounded-xl border border-slate-200 hover:border-lime-500 transition shadow-sm hover:shadow-md p-5 flex flex-col md:flex-row items-center justify-between gap-4">
             
-            <!-- Codice & Info Tratta -->
             <div class="flex items-center space-x-6 w-full md:w-auto">
               <div class="bg-slate-100 border border-slate-200 text-green-950 font-black px-3 py-2 rounded-lg text-sm text-center min-w-[85px]">
                 ${v.codice_volo}
@@ -201,7 +193,7 @@
                   <div class="w-16 h-0.5 bg-slate-300 relative my-1">
                     <span class="absolute -top-1 right-0 text-[8px] text-slate-400">✈</span>
                   </div>
-                  <span class="text-[10px] text-green-700 font-bold">Diretto</span>
+                  <span class="text-[10px] text-green-700 font-bold">15 min</span>
                 </div>
                 <div class="text-center">
                   <div class="text-xl font-black text-slate-900">${formatTime(v.data_ora_arrivo)}</div>
@@ -210,14 +202,13 @@
               </div>
             </div>
 
-            <!-- Posti & Prezzo -->
             <div class="flex items-center justify-between md:justify-end space-x-6 w-full md:w-auto border-t md:border-t-0 pt-3 md:pt-0">
               <div class="text-right">
                 <span class="text-xs font-semibold text-slate-400 block">Posti liberi: <b class="${v.posti_disponibili <= 5 ? 'text-red-600' : 'text-slate-700'}">${v.posti_disponibili}</b></span>
                 <span class="text-2xl font-black text-green-900">€ ${parseFloat(v.prezzo_base).toFixed(2)}</span>
               </div>
               <a href="booking.html?volo_id=${v.id}" class="btn-action-lime px-5 py-2.5 rounded-lg text-sm font-bold text-center block shadow">
-                Seleziona
+                Prenota
               </a>
             </div>
 
@@ -227,14 +218,13 @@
       } catch (err) {
         flightsList.innerHTML = `
           <div class="bg-red-50 border border-red-200 text-red-700 p-6 rounded-xl text-center text-sm font-medium">
-            Impossibile caricare i voli: ${err.message}. Verifica che il server backend sia attivo.
+            Errore caricamento: ${err.message}
           </div>
         `;
         flightsCounter.textContent = 'Errore';
       }
     }
 
-    // Ricerca tramite Form
     searchForm.addEventListener('submit', (e) => {
       e.preventDefault();
       loadFlights({
@@ -244,7 +234,6 @@
       });
     });
 
-    // Ricerca Rapida PNR
     pnrForm.addEventListener('submit', (e) => {
       e.preventDefault();
       const pnr = document.getElementById('pnr-input').value.trim().toUpperCase();
@@ -253,7 +242,6 @@
       }
     });
 
-    // Caricamento iniziale di tutti i voli
     loadFlights();
   </script>
 </body>

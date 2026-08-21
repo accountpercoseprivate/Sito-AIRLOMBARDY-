@@ -1,8 +1,12 @@
-export const CONFIG = {
-  // Indirizzo del backend FastAPI
-  API_BASE_URL: 'http://localhost:8000/api/v1',
+// =============================================================================
+// LOMBARDAIR - CONFIGURAZIONE GLOBALE & API CLIENT (PRODUZIONE)
+// =============================================================================
 
-  // Credenziali Supabase del tuo progetto
+export const CONFIG = {
+  // Il tuo backend live su Render
+  API_BASE_URL: 'https://sito-airlombardy.onrender.com/api/v1',
+
+  // Il tuo progetto Supabase
   SUPABASE_URL: 'https://zfxjvkkovramshicckwi.supabase.co',
   SUPABASE_ANON_KEY: 'sb_publishable_sg415c14o-AQJoMOQrrXZA_bnsECYoU',
 };
@@ -22,7 +26,7 @@ export function getSupabase() {
 }
 
 /**
- * Wrapper centralizzato per le chiamate REST al backend FastAPI.
+ * Wrapper centralizzato per le chiamate REST al backend FastAPI su Render.
  * Inietta in automatico il token JWT dell'utente autenticato (se presente).
  */
 export async function apiFetch(endpoint, options = {}) {
