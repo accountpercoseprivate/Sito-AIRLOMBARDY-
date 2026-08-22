@@ -1,20 +1,18 @@
 // =============================================================================
 // LOMBARDAIR - DASHBOARD PASSEGGERO REALE (passenger-dashboard.js)
-// Integrazione Scanner Laser 3D, Check-in Atomico, Benefits & Nuovi Servizi Extra
 // =============================================================================
 
 import { getSupabase } from './config.js';
 import { getCurrentUser, logout } from './auth.js';
 import { startGateScanner3D } from './scanner-3d.js';
 
-// Riferimenti DOM Utente & Club Flying Lomb
+// Riferimenti DOM
 const userDisplayName = document.getElementById('user-display-name');
 const userDisplayEmail = document.getElementById('user-display-email');
 const welcomeTitle = document.getElementById('welcome-title');
 const btnLogout = document.getElementById('btn-user-logout');
 const alertBox = document.getElementById('passenger-alert');
 
-// Riferimenti DOM Tab Navigation
 const tabBtnVoli = document.getElementById('tab-btn-voli');
 const tabBtnBenefits = document.getElementById('tab-btn-benefits');
 const tabBtnFids = document.getElementById('tab-btn-fids');
@@ -25,19 +23,17 @@ const sectionBenefits = document.getElementById('section-benefits');
 const sectionFids = document.getElementById('section-fids');
 const sectionExtra = document.getElementById('section-extra');
 
-// Contenitori Dinamici
 const listaBigliettiContainer = document.getElementById('lista-biglietti-container');
 const listaRiscattiContainer = document.getElementById('lista-riscatti-container');
 const fidsTableBody = document.getElementById('fids-table-body');
 const fidsClock = document.getElementById('fids-clock');
 
-// Stato in memoria
 let currentUser = null;
 let currentProfile = null;
 let userBookings = [];
 
 // =============================================================================
-// 1. INIZIALIZZAZIONE & CONTROLLO SESSIONE
+// 1. INIZIALIZZAZIONE & DATI REALI
 // =============================================================================
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -47,13 +43,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   await caricaStoricoRiscatti();
 });
 
-if (btnLogout) {
-  btnLogout.addEventListener('click', logout);
-}
+if (btnLogout) btnLogout.addEventListener('click', logout);
 
-/**
- * Recupera il profilo reale da Supabase e calcola lo stato "Flying Lomb"
- */
 async function fetchUserData() {
   const sb = getSupabase();
   currentUser = await getCurrentUser();
@@ -70,10 +61,6 @@ async function fetchUserData() {
       .eq('id', currentUser.id)
       .single();
 
-    if (error && error.code !== 'PGRST116') {
-      throw error;
-    }
-
     currentProfile = profile || {
       nome: currentUser.user_metadata?.nome || currentUser.email.split('@')[0],
       cognome: currentUser.user_metadata?.cognome || '',
@@ -86,13 +73,10 @@ async function fetchUserData() {
     await fetchUserBookings();
 
   } catch (err) {
-    showAlert(`Errore nel caricamento del profilo: ${err.message}`, true);
+    showAlert(`Errore profilo: ${err.message}`, true);
   }
 }
 
-/**
- * Renderizza il badge fedeltà Flying Lomb sia nella topbar che nell'Hero
- */
 function renderLoyaltyCard(p) {
   const nomeCompleto = `${p.nome || ''} ${p.cognome || ''}`.trim() || currentUser.email;
   
@@ -103,7 +87,7 @@ function renderLoyaltyCard(p) {
   const xp = p.xp_balance || 0;
   let tier = p.loyalty_tier || 'Explorer';
   let nextThreshold = 100;
-  let tierColor = 'bg-slate-700 text-slate-200';
+  let tierColor = 'bg-forest-800 text-lime-400 border border-lime-500/40';
 
   if (tier === 'Platinum' || xp >= 300) {
     tier = 'Platinum';
@@ -117,14 +101,9 @@ function renderLoyaltyCard(p) {
     tier = 'Silver';
     nextThreshold = 180;
     tierColor = 'bg-slate-300 text-forest-950 font-bold';
-  } else {
-    tier = 'Explorer';
-    nextThreshold = 100;
-    tierColor = 'bg-forest-800 text-lime-400 border border-lime-500/40';
   }
 
-  // Aggiorna il box Flying Lomb nell'Hero
-  const heroLoyaltyBox = document.querySelector('.bg-white\\/5.border.border-white\\/10') || document.querySelector('.bg-white\\/5');
+  const heroLoyaltyBox = document.querySelector('.bg-white\\/5.border.border-white\\/10');
   if (heroLoyaltyBox) {
     heroLoyaltyBox.innerHTML = `
       <div class="w-12 h-12 rounded-2xl ${tierColor} flex items-center justify-center font-black text-xl shadow-md">
@@ -149,17 +128,11 @@ function renderLoyaltyCard(p) {
 }
 
 // =============================================================================
-// 2. RECUPERO PRENOTAZIONI ATTIVE & CARD BIGLIETTI (I MIEI VOLI)
+// 2. RECUPERO BIGLIETTI REALI DA SUPABASE
 // =============================================================================
 
 async function fetchUserBookings() {
   if (!listaBigliettiContainer) return;
-
-  listaBigliettiContainer.innerHTML = `
-    <div class="p-10 text-center bg-white rounded-3xl border border-slate-200/80 text-xs font-semibold text-slate-400 animate-pulse">
-      Caricamento titoli di viaggio dal database Supabase...
-    </div>
-  `;
 
   try {
     const sb = getSupabase();
@@ -174,38 +147,22 @@ async function fetchUserBookings() {
 
     userBookings = data || [];
 
-    // Fallback dimostrativo se non ci sono ancora biglietti nel database
     if (userBookings.length === 0) {
-      userBookings = [
-        {
-          id: 'demo-flight',
-          codice_prenotazione: 'LM-8K9F2',
-          nome_passeggero: currentProfile?.nome || 'Test',
-          cognome_passeggero: currentProfile?.cognome || 'User',
-          posto_assegnato: '04A',
-          prezzo_finale: 89.00,
-          stato: 'confermata',
-          check_in_status: false,
-          in_flight_meal: false,
-          priority_boarding: false,
-          pet_in_cabin: false,
-          extra_baggage: false,
-          fast_track: false,
-          lounge_access: false,
-          seat_selection_fee: 0,
-          voli: {
-            codice_volo: 'LM-102',
-            aeroporto_origine: 'LIN',
-            aeroporto_destinazione: 'MNZ',
-            data_ora_partenza: new Date(Date.now() + 3600000 * 2).toISOString(),
-            data_ora_arrivo: new Date(Date.now() + 3600000 * 2 + 1500000).toISOString(),
-            stato: 'programmato'
-          }
-        }
-      ];
+      listaBigliettiContainer.innerHTML = `
+        <div class="p-12 text-center bg-white rounded-3xl border border-slate-200/80 shadow-sm">
+          <div class="w-12 h-12 mx-auto rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400 text-xl font-bold mb-3">
+            ✈️
+          </div>
+          <h4 class="text-sm font-extrabold text-slate-800">Nessun biglietto acquistato</h4>
+          <p class="text-xs text-slate-400 mt-1 mb-5">Non ci sono voli prenotati per il tuo account nel database.</p>
+          <a href="index.html#tabellone" class="inline-flex px-5 py-2.5 rounded-xl bg-lime-500 hover:bg-lime-400 text-forest-950 font-black text-xs uppercase tracking-wider shadow-cta-glow transition">
+            Prenota un Volo dal Tabellone
+          </a>
+        </div>
+      `;
+      return;
     }
 
-    // Rendering delle Card Biglietto
     listaBigliettiContainer.innerHTML = userBookings.map(b => {
       const v = b.voli || {};
       const dPartenza = v.data_ora_partenza ? new Date(v.data_ora_partenza) : new Date();
@@ -214,13 +171,12 @@ async function fetchUserBookings() {
       const isCheckedIn = b.check_in_status === true;
 
       const extraList = [];
-      if (b.in_flight_meal) extraList.push('🍽️ Pasto Catering');
-      if (b.priority_boarding) extraList.push('🚀 Gruppo 1 Priority');
-      if (b.pet_in_cabin) extraList.push('🐾 Pet Pass');
-      if (b.extra_baggage) extraList.push('🧳 Bagaglio 23kg');
+      if (b.in_flight_meal) extraList.push('🍽️ Pasto');
+      if (b.priority_boarding) extraList.push('🚀 Gruppo 1');
+      if (b.pet_in_cabin) extraList.push('🐾 Pet');
+      if (b.extra_baggage) extraList.push('🧳 Bagaglio');
       if (b.fast_track) extraList.push('⚡ Fast Track');
-      if (b.lounge_access) extraList.push('🍸 Lounge VIP');
-      if (b.seat_selection_fee > 0) extraList.push('⭐ Posto Premium');
+      if (b.lounge_access) extraList.push('🍸 Lounge');
 
       return `
         <div class="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/90 shadow-card-soft hover:shadow-lg transition-all flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
@@ -299,14 +255,14 @@ async function fetchUserBookings() {
   } catch (err) {
     listaBigliettiContainer.innerHTML = `
       <div class="p-8 text-center text-red-600 font-bold text-xs bg-red-50 rounded-2xl border border-red-200">
-        Errore durante il recupero dei biglietti: ${err.message}
+        Errore recupero biglietti: ${err.message}
       </div>
     `;
   }
 }
 
 // =============================================================================
-// 3. CHECK-IN CON SCANNER LASER 3D (+5 XP e +50 Miglia)
+// 3. CHECK-IN REALE CON SCANNER LASER 3D
 // =============================================================================
 
 window.eseguiCheckIn = function(codicePnr) {
@@ -317,46 +273,41 @@ window.eseguiCheckIn = function(codicePnr) {
     codicePnr, 
     { origine: volo.aeroporto_origine || 'LIN', destinazione: volo.aeroporto_destinazione || 'MNZ' },
     async () => {
-      showAlert(`✓ Check-in completato per ${codicePnr}! Hai guadagnato +5 XP e +50 Miglia.`);
-      if (biglietto) biglietto.check_in_status = true;
+      showAlert(`✓ Check-in completato per ${codicePnr}! (+5 XP / +50 Miglia accreditate).`);
       await fetchUserData();
     }
   );
 };
 
 // =============================================================================
-// 4. STORE RISCATTO MIGLIA & BENEFIT
+// 4. STORE RISCATTO MIGLIA & STORICO REALE
 // =============================================================================
 
 window.richiediRiscatto = async function(tipoPremio, costoMiglia) {
   if (!currentProfile) return;
 
   if ((currentProfile.miles_balance || 0) < costoMiglia) {
-    showAlert(`Saldo insufficiente: ti mancano ${costoMiglia - (currentProfile.miles_balance || 0)} miglia per richiedere questo premio.`, true);
+    showAlert(`Saldo insufficiente: ti mancano ${costoMiglia - (currentProfile.miles_balance || 0)} miglia.`, true);
     return;
   }
 
-  if (!confirm(`Confermi la richiesta di riscatto per "${tipoPremio}" al costo di ${costoMiglia} Miglia?`)) {
-    return;
-  }
+  if (!confirm(`Confermi il riscatto di "${tipoPremio}" per ${costoMiglia} Miglia?`)) return;
 
   try {
     const sb = getSupabase();
-    showAlert(`Elaborazione riscatto "${tipoPremio}" in corso...`);
-
-    const { data, error } = await sb.rpc('richiedi_riscatto_premio', {
+    const { error } = await sb.rpc('richiedi_riscatto_premio', {
       p_tipo_premio: tipoPremio,
       p_costo_miglia: costoMiglia
     });
 
     if (error) throw error;
 
-    showAlert(`✓ Richiesta di riscatto per "${tipoPremio}" inviata all'amministrazione! Miglia scalate: -${costoMiglia}.`);
+    showAlert(`✓ Richiesta riscatto inviata all'amministrazione! Miglia scalate: -${costoMiglia}.`);
     await fetchUserData();
     await caricaStoricoRiscatti();
 
   } catch (err) {
-    showAlert(`Errore nel riscatto del premio: ${err.message}`, true);
+    showAlert(`Errore riscatto: ${err.message}`, true);
   }
 };
 
@@ -376,7 +327,7 @@ async function caricaStoricoRiscatti() {
     if (!riscatti || riscatti.length === 0) {
       listaRiscattiContainer.innerHTML = `
         <div class="p-6 text-center text-slate-400 text-xs font-semibold">
-          Nessuna richiesta di riscatto premio inviata finora.
+          Nessuna richiesta di riscatto inviata finora.
         </div>
       `;
       return;
@@ -387,11 +338,11 @@ async function caricaStoricoRiscatti() {
       let statusBadge = '';
 
       if (r.stato === 'in_attesa') {
-        statusBadge = '<span class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase bg-amber-100 text-amber-900 border border-amber-300">⏳ In Attesa Approvazione Admin</span>';
+        statusBadge = '<span class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase bg-amber-100 text-amber-900 border border-amber-300">⏳ In Attesa</span>';
       } else if (r.stato === 'approvato') {
-        statusBadge = '<span class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase bg-emerald-100 text-emerald-800 border border-emerald-300">✓ Approvato & Convalidato</span>';
+        statusBadge = '<span class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase bg-emerald-100 text-emerald-800 border border-emerald-300">✓ Approvato</span>';
       } else {
-        statusBadge = '<span class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase bg-rose-100 text-rose-800 border border-rose-200">✕ Rifiutato (Miglia Rimborsate)</span>';
+        statusBadge = '<span class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase bg-rose-100 text-rose-800 border border-rose-200">✕ Rifiutato (Rimborsato)</span>';
       }
 
       return `
@@ -400,7 +351,7 @@ async function caricaStoricoRiscatti() {
             <div class="font-extrabold text-slate-900 text-sm">${r.tipo_premio}</div>
             <div class="text-slate-500 text-[11px] mt-0.5">
               Data: <b>${dataStr}</b> • Costo: <b class="text-forest-900 font-mono">-${r.costo_miglia} Miglia</b>
-              ${r.note_admin ? `<span class="block text-slate-600 mt-1 italic">Nota Admin: ${r.note_admin}</span>` : ''}
+              ${r.note_admin ? `<span class="block text-slate-600 mt-1 italic">Nota: ${r.note_admin}</span>` : ''}
             </div>
           </div>
           <div>${statusBadge}</div>
@@ -409,12 +360,12 @@ async function caricaStoricoRiscatti() {
     }).join('');
 
   } catch (err) {
-    console.warn('Errore storico riscatti:', err);
+    console.warn('Errore storico:', err);
   }
 }
 
 // =============================================================================
-// 5. TABELLONE FIDS REALE
+// 5. TABELLONE FIDS REALE DA SUPABASE
 // =============================================================================
 
 window.caricaTabelloneFIDS = async function() {
@@ -431,13 +382,18 @@ window.caricaTabelloneFIDS = async function() {
 
     if (error) throw error;
 
-    const listaVoli = (voli && voli.length > 0) ? voli : [
-      { data_ora_partenza: new Date(Date.now() + 1800000).toISOString(), aeroporto_destinazione: 'MONZA HUB (MNZ)', codice_volo: 'LM 102', stato: 'in_imbarco', is_private_charter: false },
-      { data_ora_partenza: new Date(Date.now() + 7200000).toISOString(), aeroporto_destinazione: 'MILANO MALPENSA (MXP)', codice_volo: 'LM 104', stato: 'programmato', is_private_charter: false },
-      { data_ora_partenza: new Date(Date.now() + 14400000).toISOString(), aeroporto_destinazione: 'MILANO LINATE (LIN)', codice_volo: 'LM 201', stato: 'programmato', is_private_charter: false }
-    ];
+    if (!voli || voli.length === 0) {
+      fidsTableBody.innerHTML = `
+        <tr>
+          <td colspan="5" class="py-8 text-center text-slate-500 font-mono">
+            NESSUN VOLO PROGRAMMATO SUL RADAR CENTRALE
+          </td>
+        </tr>
+      `;
+      return;
+    }
 
-    fidsTableBody.innerHTML = listaVoli.map(v => {
+    fidsTableBody.innerHTML = voli.map(v => {
       const d = new Date(v.data_ora_partenza);
       const orario = d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
       
@@ -477,23 +433,17 @@ window.caricaTabelloneFIDS = async function() {
     }).join('');
 
   } catch (err) {
-    fidsTableBody.innerHTML = `
-      <tr>
-        <td colspan="5" class="py-6 text-center text-red-400 font-mono text-xs">
-          Errore radar FIDS: ${err.message}
-        </td>
-      </tr>
-    `;
+    fidsTableBody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-red-400 font-mono text-xs">Errore radar FIDS: ${err.message}</td></tr>`;
   }
 };
 
 // =============================================================================
-// 6. ACQUISTO SERVIZI EXTRA
+// 6. ACQUISTO SERVIZI EXTRA REALI SU SUPABASE
 // =============================================================================
 
 window.aggiungiServizioExtra = async function(tipoServizio, prezzo) {
   if (userBookings.length === 0) {
-    showAlert("Nessuna prenotazione attiva trovata.", true);
+    showAlert("Non ci sono prenotazioni attive nel database su cui aggiungere extra.", true);
     return;
   }
 
@@ -510,27 +460,23 @@ window.aggiungiServizioExtra = async function(tipoServizio, prezzo) {
     else if (tipoServizio.includes('Fast Track')) updatePayload.fast_track = true;
     else if (tipoServizio.includes('Lounge')) updatePayload.lounge_access = true;
 
-    if (userBookings[0].id !== 'demo-flight') {
-      const { error } = await sb
-        .from('prenotazioni')
-        .update(updatePayload)
-        .eq('codice_prenotazione', pnrAttivo);
+    const { error } = await sb
+      .from('prenotazioni')
+      .update(updatePayload)
+      .eq('codice_prenotazione', pnrAttivo);
 
-      if (error) throw error;
-    } else {
-      Object.assign(userBookings[0], updatePayload);
-    }
+    if (error) throw error;
 
-    showAlert(`✓ Servizio ${tipoServizio} (€ ${prezzo.toFixed(2)}) aggiunto con successo al volo ${pnrAttivo}!`);
+    showAlert(`✓ Servizio ${tipoServizio} aggiunto con successo al volo ${pnrAttivo}!`);
     await fetchUserBookings();
 
   } catch (err) {
-    showAlert(`Errore nell'acquisto del servizio: ${err.message}`, true);
+    showAlert(`Errore acquisto servizio: ${err.message}`, true);
   }
 };
 
 // =============================================================================
-// 7. UTILITY: OROLOGIO, ALERT & TABS SWITCHER (COMPLETI E FUNZIONANTI)
+// 7. UTILITY & TAB SWITCHER
 // =============================================================================
 
 function startFidsClock() {
