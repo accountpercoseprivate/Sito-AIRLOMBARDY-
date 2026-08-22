@@ -17,74 +17,51 @@ def genera_codice_pnr() -> str:
 @router.post("/", response_model=PrenotazioneResponse, status_code=status.HTTP_201_CREATED)
 async def crea_prenotazione(dati: PrenotazioneCreate):
     """
-    Emette una nuova prenotazione:
-    1. Verifica che il volo esista e abbia posti disponibili.
-    2. Controlla che il posto scelto non sia già occupato.
-    3. Registra il passeggero e aggiorna i posti disponibili del volo.
+    Emette una nuova prenotazione in modo transazionale e atomico:
+    utilizza la funzione PostgreSQL crea_prenotazione_atomica per prevenire doppi acquisti.
     """
     try:
-        # 1. Recupero dati volo
-        volo_res = supabase_admin.table("voli").select("*").eq("id", dati.volo_id).execute()
-        if not volo_res.data:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Volo selezionato non valido.")
-        
-        volo = volo_res.data[0]
-        if volo["stato"] != "programmato":
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Il volo non è più prenotabile.")
-        
-        if volo["posti_disponibili"] <= 0:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Volo al completo. Nessun posto disponibile.")
-
-        # 2. Controllo duplicazione posto
-        posto_check = (
-            supabase_admin.table("prenotazioni")
-            .select("id")
-            .eq("volo_id", dati.volo_id)
-            .eq("posto_assegnato", dati.posto_assegnato)
-            .neq("stato", "annullata")
-            .execute()
-        )
-        if posto_check.data:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail=f"Il posto {dati.posto_assegnato} è già stato occupato. Scegli un altro sedile."
-            )
-
-        # 3. Creazione record prenotazione
         pnr = genera_codice_pnr()
-        nuova_prenotazione = {
-            "codice_prenotazione": pnr,
-            "utente_id": dati.utente_id if dati.utente_id else None,
-            "volo_id": dati.volo_id,
-            "nome_passeggero": dati.nome_passeggero.strip().title(),
-            "cognome_passeggero": dati.cognome_passeggero.strip().upper(),
-            "documento_identita": dati.documento_identita.strip().upper(),
-            "posto_assegnato": dati.posto_assegnato,
-            "prezzo_finale": volo["prezzo_base"],
-            "stato": "confermata"
+
+        # Invoca la funzione RPC atomica su Supabase
+        rpc_params = {
+            "p_volo_id": dati.volo_id,
+            "p_utente_id": dati.utente_id if dati.utente_id else None,
+            "p_nome": dati.nome_passeggero.strip().title(),
+            "p_cognome": dati.cognome_passeggero.strip().upper(),
+            "p_documento": dati.documento_identita.strip().upper(),
+            "p_posto": dati.posto_assegnato,
+            "p_pnr": pnr
         }
 
-        res_insert = supabase_admin.table("prenotazioni").insert(nuova_prenotazione).execute()
-        if not res_insert.data:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Impossibile completare la prenotazione.")
+        rpc_res = supabase_admin.rpc("crea_prenotazione_atomica", rpc_params).execute()
 
-        prenotazione_creata = res_insert.data[0]
+        if not rpc_res.data:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, 
+                detail="Impossibile completare la prenotazione del posto selezionato."
+            )
 
-        # 4. Decremento atomico dei posti disponibili sul volo
-        supabase_admin.table("voli").update({
-            "posti_disponibili": volo["posti_disponibili"] - 1
-        }).eq("id", dati.volo_id).execute()
+        prenotazione = rpc_res.data
 
-        # Includi l'oggetto volo nella risposta
-        prenotazione_creata["volo"] = volo
-        return prenotazione_creata
+        # Recupera dati volo per la risposta
+        volo_res = supabase_admin.table("voli").select("*").eq("id", dati.volo_id).single().execute()
+        prenotazione["volo"] = volo_res.data
 
-    except HTTPException:
-        raise
+        return prenotazione
+
     except Exception as e:
+        err_msg = str(e)
+        if "già occupato" in err_msg:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=err_msg)
+        if "Nessun posto disponibile" in err_msg or "non è prenotabile" in err_msg:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=err_msg)
+        if "Volo non trovato" in err_msg:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=err_msg)
+        
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Errore durante l'elaborazione della prenotazione: {str(e)}"
+            detail=f"Errore durante l'elaborazione della prenotazione: {err_msg}"
         )
 
 
@@ -112,10 +89,7 @@ async def ottieni_prenotazione_da_pnr(codice_pnr: str):
 
 @router.get("/{codice_pnr}/carta-imbarco", response_model=CartaImbarcoData)
 async def ottieni_dati_carta_imbarco(codice_pnr: str):
-    """
-    Restituisce il set di dati aggregati necessari al rendering 3D
-    e alla stampa istituzionale della carta d'imbarco.
-    """
+    """Restituisce i dati aggregati per il render 3D e la stampa della carta d'imbarco."""
     try:
         res = (
             supabase_admin.table("prenotazioni")

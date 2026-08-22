@@ -1,48 +1,49 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
 
 :root {
   /* Palette Istituzionale LombardiAIR */
-  --brand-forest-950: #041a0f;
-  --brand-forest-900: #072e1a;
-  --brand-forest-800: #0c4327;
-  --brand-forest-700: #145a36;
-  --brand-lime: #72db1a;
-  --brand-lime-hover: #61bd14;
-  --brand-surface: #f4f7f5;
-  --brand-border: #dbe4de;
+  --brand-forest-950: #04170E;
+  --brand-forest-900: #0B2519;
+  --brand-forest-850: #0E3021;
+  --brand-forest-800: #14422D;
+  --brand-forest-700: #1C5B3E;
+  --brand-lime: #84CC16;
+  --brand-lime-hover: #A3E635;
+  --brand-surface: #F8FAFC;
+  --brand-border: #E2E8F0;
   --brand-slate: #475569;
 }
 
 body {
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
   background-color: var(--brand-surface);
-  color: #0f172a;
+  color: #0F172A;
   -webkit-font-smoothing: antialiased;
 }
 
 /* Fascia superiore istituzionale */
 .gov-topbar {
-  background: linear-gradient(90deg, #072e1a 0%, #0c4327 100%);
+  background: linear-gradient(90deg, #04170E 0%, #0B2519 100%);
   border-bottom: 3px solid var(--brand-lime);
 }
 
 /* Stili personalizzati per bottoni azione Lime */
 .btn-action-lime {
   background-color: var(--brand-lime);
-  color: #072e1a;
-  font-weight: 700;
-  transition: all 0.15s ease-in-out;
+  color: #04170E;
+  font-weight: 800;
+  transition: all 0.2s ease-in-out;
 }
 
 .btn-action-lime:hover {
   background-color: var(--brand-lime-hover);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(114, 219, 26, 0.35);
+  box-shadow: 0 8px 20px -4px rgba(132, 204, 22, 0.45);
 }
 
 .btn-action-lime:disabled {
-  background-color: #cbd5e1;
-  color: #64748b;
+  background-color: #CBD5E1;
+  color: #64748B;
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
@@ -50,11 +51,11 @@ body {
 
 /* Matrice Selezione Posti Aereo (Fusoliera) */
 .aircraft-cabin {
-  background: #ffffff;
-  border: 2px solid var(--brand-border);
+  background: #FFFFFF;
+  border: 1.5px solid var(--brand-border);
   border-radius: 1.5rem;
   padding: 1.5rem;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 10px 30px -5px rgba(11, 37, 25, 0.05);
 }
 
 .seat-grid {
@@ -66,37 +67,37 @@ body {
 
 .seat {
   aspect-ratio: 1;
-  border-radius: 0.375rem;
+  border-radius: 0.5rem;
   font-size: 0.75rem;
-  font-weight: 700;
+  font-weight: 800;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: all 0.15s ease;
-  border: 1.5px solid #cbd5e1;
-  background-color: #f8fafc;
+  border: 1.5px solid #CBD5E1;
+  background-color: #F8FAFC;
   color: #334155;
 }
 
 .seat.available:hover {
   border-color: var(--brand-lime);
-  background-color: #ecfccb;
-  color: #072e1a;
+  background-color: #ECFCCB;
+  color: #04170E;
   transform: scale(1.08);
 }
 
 .seat.selected {
   background-color: var(--brand-lime) !important;
-  border-color: #4d9c0e !important;
-  color: #072e1a !important;
-  box-shadow: 0 0 0 3px rgba(114, 219, 26, 0.4);
+  border-color: #65A30D !important;
+  color: #04170E !important;
+  box-shadow: 0 0 0 3px rgba(132, 204, 22, 0.4);
 }
 
 .seat.occupied {
-  background-color: #e2e8f0;
-  border-color: #cbd5e1;
-  color: #94a3b8;
+  background-color: #E2E8F0;
+  border-color: #CBD5E1;
+  color: #94A3B8;
   cursor: not-allowed;
   text-decoration: line-through;
 }
@@ -106,50 +107,50 @@ body {
   align-items: center;
   justify-content: center;
   font-size: 0.75rem;
-  color: #94a3b8;
-  font-weight: 600;
+  color: #94A3B8;
+  font-weight: 700;
 }
 
 /* Canvas 3D Carta d'Imbarco */
 #canvas-3d-container {
   width: 100%;
   height: 480px;
-  background: radial-gradient(circle at center, #145a36 0%, #072e1a 100%);
-  border-radius: 1rem;
+  background: radial-gradient(circle at center, #1C5B3E 0%, #04170E 100%);
+  border-radius: 1.5rem;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 20px 25px -5px rgba(7, 46, 26, 0.4);
+  box-shadow: 0 25px 50px -12px rgba(4, 23, 14, 0.5);
 }
 
 /* Badge di stato */
 .badge-status {
   padding: 0.25rem 0.625rem;
   font-size: 0.75rem;
-  font-weight: 700;
+  font-weight: 800;
   border-radius: 9999px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
 .badge-status.programmato {
-  background-color: #dcfce7;
+  background-color: #DCFCE7;
   color: #166534;
 }
 
 .badge-status.in_volo {
-  background-color: #e0f2fe;
-  color: #0369a1;
+  background-color: #E0F2FE;
+  color: #0369A1;
 }
 
 .badge-status.cancellato {
-  background-color: #fee2e2;
-  color: #991b1b;
+  background-color: #FEE2E2;
+  color: #991B1B;
 }
 
 /* Stampa ufficiale */
 @media print {
   body {
-    background: #ffffff;
+    background: #FFFFFF;
   }
   .no-print {
     display: none !important;

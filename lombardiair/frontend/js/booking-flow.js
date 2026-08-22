@@ -70,7 +70,7 @@ async function initBooking() {
   }
 }
 
-// 2. Genera Matrice Sedili Fusoliera (Airbus A320)
+// 2. Genera Matrice Sedili Fusoliera in modo Dinamico
 async function loadSeatMap() {
   try {
     occupiedSeats = await apiFetch(`/voli/${voloId}/posti-occupati`);
@@ -79,7 +79,10 @@ async function loadSeatMap() {
     grid.innerHTML = '';
 
     const cols = ['A', 'B', 'C', 'AISLE', 'D', 'E', 'F'];
-    const totalRows = 10; // 10 file da 6 posti
+    
+    // Calcolo dinamico delle file in base alla capienza del volo (6 sedili per fila)
+    const capienzaTotale = currentVolo?.posti_totali || 60;
+    const totalRows = Math.max(1, Math.ceil(capienzaTotale / 6));
 
     for (let r = 1; r <= totalRows; r++) {
       cols.forEach(col => {
@@ -141,7 +144,7 @@ function setupEvents() {
       step1.classList.add('hidden');
       step2.classList.remove('hidden');
       tab1.className = 'flex items-center space-x-2 text-slate-400 font-bold text-sm';
-      tab2.className = 'flex items-center space-x-2 text-green-900 font-bold text-sm';
+      tab2.className = 'flex items-center space-x-2 text-forest-900 font-bold text-sm';
       loadSeatMap();
     });
   }
@@ -151,7 +154,7 @@ function setupEvents() {
     step2.classList.add('hidden');
     step1.classList.remove('hidden');
     tab2.className = 'flex items-center space-x-2 text-slate-400 font-bold text-sm';
-    tab1.className = 'flex items-center space-x-2 text-green-900 font-bold text-sm';
+    tab1.className = 'flex items-center space-x-2 text-forest-900 font-bold text-sm';
   });
 
   // Step 2 -> Step 3 (Avanti)
@@ -172,7 +175,7 @@ function setupEvents() {
     step2.classList.add('hidden');
     step3.classList.remove('hidden');
     tab2.className = 'flex items-center space-x-2 text-slate-400 font-bold text-sm';
-    tab3.className = 'flex items-center space-x-2 text-green-900 font-bold text-sm';
+    tab3.className = 'flex items-center space-x-2 text-forest-900 font-bold text-sm';
   });
 
   // Step 3 -> Step 2 (Indietro)
@@ -180,7 +183,7 @@ function setupEvents() {
     step3.classList.add('hidden');
     step2.classList.remove('hidden');
     tab3.className = 'flex items-center space-x-2 text-slate-400 font-bold text-sm';
-    tab2.className = 'flex items-center space-x-2 text-green-900 font-bold text-sm';
+    tab2.className = 'flex items-center space-x-2 text-forest-900 font-bold text-sm';
   });
 
   // Invio Prenotazione Finale
