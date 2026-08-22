@@ -132,7 +132,7 @@ async function loadStats() {
 }
 
 // =============================================================================
-// 2. TABELLA FLOTTA VOLI & AZIONI RAPIDE RITARDI (+15M / +30M / RIPRISTINO)
+// 2. TABELLA FLOTTA VOLI & AZIONI RAPIDE (RITARDI / MODIFICA / ELIMINAZIONE)
 // =============================================================================
 
 window.loadFlightsTable = async function() {
@@ -201,7 +201,6 @@ window.loadFlightsTable = async function() {
             </div>
           </td>
           <td class="px-6 py-4 text-right space-x-1 whitespace-nowrap">
-            <!-- Azioni Rapide Ritardi -->
             ${!isCancellato ? `
               <button onclick="dichiaraRitardo('${v.id}', '${v.codice_volo}', 15)" title="Applica 15 minuti di ritardo" class="px-2 py-1 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-lg text-[10px] font-black text-amber-800 transition">
                 ⏱️ +15m
@@ -217,11 +216,16 @@ window.loadFlightsTable = async function() {
               <button onclick="apriModaleModificaVolo('${v.id}', '${v.codice_volo}', ${v.prezzo_base}, '${v.stato}')" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-lg text-[10px] font-bold text-slate-700 transition">
                 ✏️ Modifica
               </button>
-              <button onclick="cancellaVolo('${v.id}', '${v.codice_volo}')" class="text-red-600 hover:text-red-800 text-[10px] font-bold bg-red-50 hover:bg-red-100 border border-red-200 px-2.5 py-1 rounded-lg transition">
-                Cancella
+              <button onclick="eliminaDefinitivamenteVolo('${v.id}', '${v.codice_volo}')" title="Cancella ed elimina definitivamente dal database" class="text-red-600 hover:text-red-800 text-[10px] font-bold bg-red-50 hover:bg-red-100 border border-red-200 px-2.5 py-1 rounded-lg transition">
+                🗑️ Elimina
               </button>
             ` : `
-              <span class="text-xs text-slate-400 font-semibold italic">Cancellato</span>
+              <button onclick="apriModaleModificaVolo('${v.id}', '${v.codice_volo}', ${v.prezzo_base}, '${v.stato}')" title="Riattiva o modifica il volo" class="px-2.5 py-1 bg-lime-100 hover:bg-lime-200 text-forest-900 border border-lime-300 rounded-lg text-[10px] font-extrabold transition">
+                ✏️ Riattiva / Modifica
+              </button>
+              <button onclick="eliminaDefinitivamenteVolo('${v.id}', '${v.codice_volo}')" title="Rimuovi definitivamente dal database" class="text-red-600 hover:text-red-800 text-[10px] font-bold bg-red-50 hover:bg-red-100 border border-red-200 px-2.5 py-1 rounded-lg transition">
+                🗑️ Elimina
+              </button>
             `}
           </td>
         </tr>
@@ -277,17 +281,18 @@ window.ripristinaVolo = async function(voloId, codice) {
   }
 };
 
-window.cancellaVolo = async function(id, codice) {
-  if (confirm(`Confermi la cancellazione del volo ${codice}? L'operazione aggiornerà lo stato in 'cancellato'.`)) {
+// Eliminazione definitiva dal database
+window.eliminaDefinitivamenteVolo = async function(id, codice) {
+  if (confirm(`Sei sicuro di voler eliminare DEFINITIVAMENTE il volo ${codice} dal sistema?`)) {
     try {
       const sb = getSupabase();
-      const { error } = await sb.from('voli').update({ stato: 'cancellato' }).eq('id', id);
+      const { error } = await sb.from('voli').delete().eq('id', id);
       if (error) throw error;
-      showAlert(`Volo ${codice} contrassegnato come cancellato.`);
+      showAlert(`✓ Volo ${codice} eliminato definitivamente con successo.`);
       await loadFlightsTable();
       await loadStats();
     } catch (err) {
-      showAlert(`Errore cancellazione: ${err.message}`, true);
+      showAlert(`Errore eliminazione: ${err.message}`, true);
     }
   }
 };
@@ -317,7 +322,7 @@ if (formEditFlight) {
       if (error) throw error;
 
       modalModificaVolo?.classList.add('hidden');
-      showAlert("Volo e tariffa base aggiornati con successo.");
+      showAlert("Volo e tariffa aggiornati con successo.");
       await loadFlightsTable();
       await loadStats();
     } catch (err) {
@@ -351,7 +356,6 @@ window.loadPassengersTable = async function() {
       const v = b.voli || {};
       const isCheckedIn = b.check_in_status === true;
 
-      // Elenco Completo Servizi Extra Reali
       const extras = [];
       if (b.in_flight_meal) extras.push('<span class="px-2 py-0.5 bg-orange-50 text-orange-900 border border-orange-200 rounded text-[10px] font-bold">🍽️ Pasto Catering</span>');
       if (b.priority_boarding) extras.push('<span class="px-2 py-0.5 bg-lime-50 text-forest-900 border border-lime-300 rounded text-[10px] font-bold">🚀 Gruppo 1 Priority</span>');
