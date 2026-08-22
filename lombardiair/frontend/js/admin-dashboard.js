@@ -71,6 +71,12 @@ function formatDate(isoStr) {
   return `${d.toLocaleDateString('it-IT')} ore ${d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}`;
 }
 
+function formatTime(isoStr) {
+  if (!isoStr) return '---';
+  const d = new Date(isoStr);
+  return d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+}
+
 // =============================================================================
 // INIZIALIZZAZIONE DASHBOARD & CONTROLLO ACCESSO
 // =============================================================================
@@ -172,8 +178,8 @@ window.loadFlightsTable = async function() {
             <span class="font-extrabold text-slate-900">${v.aeroporto_destinazione}</span>
           </td>
           <td class="px-6 py-4 font-semibold">
-            <div class="text-slate-900"><b>Partenza:</b> ${formatDate(v.data_ora_partenza)}</div>
-            <div class="text-slate-400"><b>Arrivo:</b> ${formatDate(v.data_ora_arrivo)}</div>
+            <div class="text-slate-900"><b>Partenza:</b> ore ${formatTime(v.data_ora_partenza)}</div>
+            <div class="text-slate-400"><b>Arrivo:</b> ore ${formatTime(v.data_ora_arrivo)}</div>
           </td>
           <td class="px-6 py-4 text-center">
             <span class="font-black ${v.posti_disponibili <= 5 ? 'text-red-600' : 'text-slate-800'}">
@@ -609,12 +615,27 @@ if (formCreateFlight) {
       const capienza = parseInt(document.getElementById('nuovo-posti').value, 10);
       const isCharter = document.getElementById('nuovo-charter')?.checked || false;
 
+      const valPartenza = document.getElementById('nuovo-partenza').value;
+      const valArrivo = document.getElementById('nuovo-arrivo').value;
+
+      const [oreP, minP] = valPartenza.split(':').map(Number);
+      const [oreA, minA] = valArrivo.split(':').map(Number);
+
+      const oggi = new Date();
+      const dtPartenza = new Date(oggi.getFullYear(), oggi.getMonth(), oggi.getDate(), oreP, minP, 0);
+      let dtArrivo = new Date(oggi.getFullYear(), oggi.getMonth(), oggi.getDate(), oreA, minA, 0);
+
+      // Se l'orario di arrivo è precedente o uguale alla partenza, passa al giorno successivo
+      if (dtArrivo <= dtPartenza) {
+        dtArrivo.setDate(dtArrivo.getDate() + 1);
+      }
+
       const payload = {
         codice_volo: document.getElementById('nuovo-codice').value.trim().toUpperCase(),
         aeroporto_origine: document.getElementById('nuovo-origine').value,
         aeroporto_destinazione: document.getElementById('nuovo-destinazione').value.trim().toUpperCase(),
-        data_ora_partenza: new Date(document.getElementById('nuovo-partenza').value).toISOString(),
-        data_ora_arrivo: new Date(document.getElementById('nuovo-arrivo').value).toISOString(),
+        data_ora_partenza: dtPartenza.toISOString(),
+        data_ora_arrivo: dtArrivo.toISOString(),
         posti_totali: capienza,
         posti_disponibili: capienza,
         prezzo_base: parseFloat(document.getElementById('nuovo-prezzo').value),

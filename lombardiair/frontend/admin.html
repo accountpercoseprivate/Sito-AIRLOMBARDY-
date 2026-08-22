@@ -146,7 +146,7 @@
           <span class="text-[11px] font-semibold text-slate-400">schedulati</span>
         </div>
         <div class="mt-3 flex items-center text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-          <span>Hub LIN • MXP • MNZ</span>
+          <span>Hub LIN • MNZ</span>
         </div>
       </div>
 
@@ -424,9 +424,7 @@
             <label class="block text-[10px] font-extrabold uppercase tracking-wider text-slate-500 mb-1.5">Origine (IATA)</label>
             <select id="nuovo-origine" required class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-lime-500 focus:bg-white transition cursor-pointer">
               <option value="LIN">Milano Linate (LIN)</option>
-              <option value="MXP">Milano Malpensa (MXP)</option>
               <option value="MNZ">Monza Hub (MNZ)</option>
-              <option value="BGY">Bergamo Orio (BGY)</option>
             </select>
           </div>
           <div>
@@ -434,11 +432,6 @@
             <select id="nuovo-destinazione" required class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-lime-500 focus:bg-white transition cursor-pointer">
               <option value="MNZ">Monza Hub (MNZ)</option>
               <option value="LIN">Milano Linate (LIN)</option>
-              <option value="MXP">Milano Malpensa (MXP)</option>
-              <option value="BGY">Bergamo Orio (BGY)</option>
-              <option value="FCO">Roma Fiumicino (FCO)</option>
-              <option value="CDG">Parigi Charles de Gaulle (CDG)</option>
-              <option value="LHR">Londra Heathrow (LHR)</option>
             </select>
           </div>
         </div>
@@ -447,7 +440,7 @@
           <div>
             <label class="block text-[10px] font-extrabold uppercase tracking-wider text-slate-500 mb-1.5">Orario Partenza</label>
             <input 
-              type="datetime-local" 
+              type="time" 
               id="nuovo-partenza" 
               required 
               class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-lime-500 focus:bg-white transition"
@@ -456,7 +449,7 @@
           <div>
             <label class="block text-[10px] font-extrabold uppercase tracking-wider text-slate-500 mb-1.5">Orario Arrivo</label>
             <input 
-              type="datetime-local" 
+              type="time" 
               id="nuovo-arrivo" 
               required 
               class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-lime-500 focus:bg-white transition"
