@@ -6,7 +6,8 @@ from schemas import VoloResponse
 
 router = APIRouter()
 
-@router.get("/", response_model=List[VoloResponse])
+@router.get("", response_model=List[VoloResponse])
+@router.get("/", response_model=List[VoloResponse], include_in_schema=False)
 async def cerca_voli(
     origine: Optional[str] = Query(None, min_length=3, max_length=3, description="Codice IATA origine (es. MXP, LIN, BGY)"),
     destinazione: Optional[str] = Query(None, min_length=3, max_length=3, description="Codice IATA destinazione (es. FCO, CDG)"),

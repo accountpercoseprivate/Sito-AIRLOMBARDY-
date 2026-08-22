@@ -70,13 +70,23 @@
   <header class="bg-forest-900/95 backdrop-blur-xl border-b border-white/10 sticky top-0 z-50 transition-all">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
       
-      <!-- Brand Logo Ufficiale -->
-      <a href="index.html" class="flex items-center space-x-3 group">
-        <img 
-          src="./logo.png" 
-          alt="LombardiAIR Logo Ufficiale" 
-          class="h-12 w-auto object-contain group-hover:scale-105 transition-transform duration-200"
-        />
+      <!-- Brand Logo Vettoriale Ufficiale Integrato (Zero dipendenze esterne) -->
+      <a href="index.html" class="flex items-center space-x-3.5 group">
+        <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-forest-800 to-forest-950 p-2 border border-lime-500/30 flex items-center justify-center shadow-lg shadow-lime-500/10 group-hover:scale-105 transition-transform duration-200">
+          <svg viewBox="0 0 100 80" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 28C28 28 48 38 52 58C42 53 26 48 16 38C13 35 12 31 12 28Z" fill="#145A32"/>
+            <path d="M18 38C34 38 52 48 55 63C45 58 30 53 22 45C19 42 18 40 18 38Z" fill="#27AE60"/>
+            <path d="M25 48C38 48 53 55 58 68C48 63 35 58 28 53C26 51 25 49 25 48Z" fill="#A3E635"/>
+            <path d="M52 58C68 32 88 28 92 38C96 48 82 68 58 68C70 65 80 54 78 44C74 34 60 42 52 58Z" fill="url(#limeGradientNav)"/>
+            <path d="M64 40L68 34L70 35L68 40L75 42L77 41L78 42L75 45L72 49L70 49L71 45L65 43L63 45L62 44L64 40Z" fill="#FFFFFF"/>
+            <defs>
+              <linearGradient id="limeGradientNav" x1="50" y1="25" x2="90" y2="65" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#A3E635"/>
+                <stop offset="1" stop-color="#65A30D"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
         <div>
           <span class="text-xl font-extrabold tracking-tight text-white block leading-none">Lombardi<span class="text-lime-400">AIR</span></span>
           <span class="text-[9px] uppercase tracking-widest text-slate-300 font-bold block mt-1">Servizio Navetta Regionale</span>
@@ -477,11 +487,15 @@
       <div class="flex flex-col md:flex-row items-center justify-between gap-6 pb-8 border-b border-white/10">
         
         <div class="flex items-center space-x-3">
-          <img 
-            src="./logo.png" 
-            alt="LombardiAIR" 
-            class="h-8 w-auto object-contain"
-          />
+          <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-forest-800 to-forest-900 p-1.5 border border-lime-500/40 flex items-center justify-center">
+            <svg viewBox="0 0 100 80" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 28C28 28 48 38 52 58C42 53 26 48 16 38C13 35 12 31 12 28Z" fill="#145A32"/>
+              <path d="M18 38C34 38 52 48 55 63C45 58 30 53 22 45C19 42 18 40 18 38Z" fill="#27AE60"/>
+              <path d="M25 48C38 48 53 55 58 68C48 63 35 58 28 53C26 51 25 49 25 48Z" fill="#A3E635"/>
+              <path d="M52 58C68 32 88 28 92 38C96 48 82 68 58 68C70 65 80 54 78 44C74 34 60 42 52 58Z" fill="#A3E635"/>
+              <path d="M64 40L68 34L70 35L68 40L75 42L77 41L78 42L75 45L72 49L70 49L71 45L65 43L63 45L62 44L64 40Z" fill="#FFFFFF"/>
+            </svg>
+          </div>
           <div>
             <span class="text-sm font-extrabold text-white">LombardiAIR S.p.A.</span>
             <span class="text-[10px] block text-slate-500">Infrastrutture Aeree di Trasporto Regionale</span>
