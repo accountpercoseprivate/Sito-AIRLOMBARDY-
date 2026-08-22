@@ -1,18 +1,34 @@
 -- =============================================================================
--- PROGETTO: LombardiAIR - Schema Definitivo & RPC
+-- PROGETTO: LombardiAIR (Schema di Produzione 100% Reale - Taratura Opzione 2)
 -- =============================================================================
 
--- 1. TABELLA: utenti_profili
+-- 1. ENUM: Tier Fedeltà "Flying Lomb"
+DO $$ BEGIN
+    CREATE TYPE public.loyalty_tier_enum AS ENUM ('Explorer', 'Silver', 'Gold', 'Platinum');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+-- 2. TABELLA: utenti_profili
 CREATE TABLE IF NOT EXISTS public.utenti_profili (
     id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
     nome TEXT,
     cognome TEXT,
     codice_fiscale VARCHAR(16),
     ruolo TEXT NOT NULL DEFAULT 'passeggero' CHECK (ruolo IN ('passeggero', 'admin')),
+    loyalty_tier public.loyalty_tier_enum NOT NULL DEFAULT 'Explorer',
+    miles_balance INTEGER NOT NULL DEFAULT 0 CHECK (miles_balance >= 0),
+    xp_balance INTEGER NOT NULL DEFAULT 0 CHECK (xp_balance >= 0),
     created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
 );
 
--- 2. TABELLA: voli
+-- Aggiornamento colonne se la tabella esiste già
+ALTER TABLE public.utenti_profili
+    ADD COLUMN IF NOT EXISTS loyalty_tier public.loyalty_tier_enum NOT NULL DEFAULT 'Explorer',
+    ADD COLUMN IF NOT EXISTS miles_balance INTEGER NOT NULL DEFAULT 0 CHECK (miles_balance >= 0),
+    ADD COLUMN IF NOT EXISTS xp_balance INTEGER NOT NULL DEFAULT 0 CHECK (xp_balance >= 0);
+
+-- 3. TABELLA: voli
 CREATE TABLE IF NOT EXISTS public.voli (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     codice_volo VARCHAR(10) NOT NULL UNIQUE,
@@ -24,12 +40,16 @@ CREATE TABLE IF NOT EXISTS public.voli (
     posti_disponibili INTEGER NOT NULL DEFAULT 180 CHECK (posti_disponibili >= 0),
     prezzo_base NUMERIC(10, 2) NOT NULL CHECK (prezzo_base >= 0),
     stato TEXT NOT NULL DEFAULT 'programmato' CHECK (stato IN ('programmato', 'in_volo', 'atterrato', 'cancellato')),
+    is_private_charter BOOLEAN NOT NULL DEFAULT false,
     created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
     CONSTRAINT check_date_congrue CHECK (data_ora_arrivo > data_ora_partenza),
     CONSTRAINT check_posti_congrui CHECK (posti_disponibili <= posti_totali)
 );
 
--- 3. TABELLA: prenotazioni
+ALTER TABLE public.voli
+    ADD COLUMN IF NOT EXISTS is_private_charter BOOLEAN NOT NULL DEFAULT false;
+
+-- 4. TABELLA: prenotazioni
 CREATE TABLE IF NOT EXISTS public.prenotazioni (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     codice_prenotazione VARCHAR(8) NOT NULL UNIQUE,
@@ -41,10 +61,20 @@ CREATE TABLE IF NOT EXISTS public.prenotazioni (
     posto_assegnato VARCHAR(4) NOT NULL,
     prezzo_finale NUMERIC(10, 2) NOT NULL CHECK (prezzo_finale >= 0),
     stato TEXT NOT NULL DEFAULT 'confermata' CHECK (stato IN ('confermata', 'imbarcato', 'annullata')),
+    check_in_status BOOLEAN NOT NULL DEFAULT false,
+    extra_baggage BOOLEAN NOT NULL DEFAULT false,
+    fast_track BOOLEAN NOT NULL DEFAULT false,
+    lounge_access BOOLEAN NOT NULL DEFAULT false,
     created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
 );
 
--- Rimuove il vecchio vincolo rigido se già presente ed applica l'Indice Parziale
+ALTER TABLE public.prenotazioni
+    ADD COLUMN IF NOT EXISTS check_in_status BOOLEAN NOT NULL DEFAULT false,
+    ADD COLUMN IF NOT EXISTS extra_baggage BOOLEAN NOT NULL DEFAULT false,
+    ADD COLUMN IF NOT EXISTS fast_track BOOLEAN NOT NULL DEFAULT false,
+    ADD COLUMN IF NOT EXISTS lounge_access BOOLEAN NOT NULL DEFAULT false;
+
+-- Indice Parziale: garantisce sedili univoci solo per biglietti attivi
 ALTER TABLE public.prenotazioni DROP CONSTRAINT IF EXISTS unique_posto_per_volo;
 
 CREATE UNIQUE INDEX IF NOT EXISTS unique_posto_attivo_per_volo 
@@ -72,7 +102,7 @@ CREATE TRIGGER on_auth_user_auto_confirm
     FOR EACH ROW EXECUTE FUNCTION public.auto_confirm_user_email();
 
 -- =============================================================================
--- TRIGGER 2: Creazione Profilo & Assegnazione Admin
+-- TRIGGER 2: Creazione Profilo & Assegnazione Super Admin
 -- =============================================================================
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER 
@@ -81,7 +111,7 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 BEGIN
-    INSERT INTO public.utenti_profili (id, nome, cognome, ruolo)
+    INSERT INTO public.utenti_profili (id, nome, cognome, ruolo, loyalty_tier, miles_balance, xp_balance)
     VALUES (
         NEW.id,
         COALESCE(NEW.raw_user_meta_data->>'nome', split_part(NEW.email, '@', 1)),
@@ -89,7 +119,10 @@ BEGIN
         CASE 
             WHEN LOWER(NEW.email) = 'dibiasioalessandro56@gmail.com' THEN 'admin'
             ELSE COALESCE(NEW.raw_user_meta_data->>'ruolo', 'passeggero')
-        END
+        END,
+        'Explorer',
+        0,
+        0
     )
     ON CONFLICT (id) DO UPDATE
     SET ruolo = EXCLUDED.ruolo;
@@ -103,7 +136,37 @@ CREATE TRIGGER on_auth_user_created
     FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
 -- =============================================================================
--- FUNZIONE RPC: Emissione Biglietto Atomica con Lock Concorrenza
+-- TRIGGER 3: Calcolo Automatico del Tier "Flying Lomb"
+-- Explorer (0-99 XP) | Silver (100-179 XP) | Gold (180-299 XP) | Platinum (300+ XP)
+-- =============================================================================
+CREATE OR REPLACE FUNCTION public.calcola_loyalty_tier()
+RETURNS TRIGGER 
+LANGUAGE plpgsql 
+SECURITY DEFINER 
+SET search_path = public
+AS $$
+BEGIN
+    IF NEW.xp_balance >= 300 THEN
+        NEW.loyalty_tier = 'Platinum';
+    ELSIF NEW.xp_balance >= 180 THEN
+        NEW.loyalty_tier = 'Gold';
+    ELSIF NEW.xp_balance >= 100 THEN
+        NEW.loyalty_tier = 'Silver';
+    ELSE
+        NEW.loyalty_tier = 'Explorer';
+    END IF;
+    RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS tr_aggiorna_loyalty_tier ON public.utenti_profili;
+CREATE TRIGGER tr_aggiorna_loyalty_tier
+    BEFORE INSERT OR UPDATE OF xp_balance ON public.utenti_profili
+    FOR EACH ROW
+    EXECUTE FUNCTION public.calcola_loyalty_tier();
+
+-- =============================================================================
+-- RPC 1: Prenotazione Volo Atomica (Lock anti race-condition)
 -- =============================================================================
 CREATE OR REPLACE FUNCTION public.crea_prenotazione_atomica(
     p_volo_id UUID,
@@ -134,33 +197,35 @@ BEGIN
     END IF;
 
     IF v_volo.stato != 'programmato' THEN
-        RAISE EXCEPTION 'Il volo non è prenotabile.';
+        RAISE EXCEPTION 'Il volo non è più prenotabile.';
     END IF;
 
     IF v_volo.posti_disponibili <= 0 THEN
         RAISE EXCEPTION 'Nessun posto disponibile su questo volo.';
     END IF;
 
-    -- Controllo posto già occupato
+    -- Controllo duplicati posto attivo
     IF EXISTS (
         SELECT 1 FROM public.prenotazioni
         WHERE volo_id = p_volo_id 
           AND posto_assegnato = p_posto
           AND stato != 'annullata'
     ) THEN
-        RAISE EXCEPTION 'Il posto % è già stato occupato. Scegli un altro sedile.', p_posto;
+        RAISE EXCEPTION 'Il posto % è già occupato. Seleziona un altro sedile.', p_posto;
     END IF;
 
     -- Inserimento prenotazione
     INSERT INTO public.prenotazioni (
         codice_prenotazione, utente_id, volo_id,
         nome_passeggero, cognome_passeggero, documento_identita,
-        posto_assegnato, prezzo_finale, stato
+        posto_assegnato, prezzo_finale, stato,
+        check_in_status, extra_baggage, fast_track, lounge_access
     )
     VALUES (
         p_pnr, p_utente_id, p_volo_id,
         p_nome, p_cognome, p_documento,
-        p_posto, v_volo.prezzo_base, 'confermata'
+        p_posto, v_volo.prezzo_base, 'confermata',
+        false, false, false, false
     )
     RETURNING * INTO v_prenotazione;
 
@@ -170,6 +235,53 @@ BEGIN
     WHERE id = p_volo_id;
 
     RETURN to_jsonb(v_prenotazione);
+END;
+$$;
+
+-- =============================================================================
+-- RPC 2: Esecuzione Check-in Online Reale (+5 XP e +50 Miglia)
+-- =============================================================================
+CREATE OR REPLACE FUNCTION public.esegui_checkin_online(p_pnr VARCHAR(8))
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+    v_prenotazione RECORD;
+BEGIN
+    SELECT * INTO v_prenotazione
+    FROM public.prenotazioni
+    WHERE UPPER(codice_prenotazione) = UPPER(p_pnr)
+    FOR UPDATE;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Nessuna prenotazione trovata con PNR %', p_pnr;
+    END IF;
+
+    IF v_prenotazione.stato = 'annullata' THEN
+        RAISE EXCEPTION 'Impossibile eseguire il check-in su un biglietto annullato.';
+    END IF;
+
+    IF v_prenotazione.check_in_status = false THEN
+        UPDATE public.prenotazioni
+        SET check_in_status = true
+        WHERE id = v_prenotazione.id;
+
+        -- Accredito fedeltà "Flying Lomb" (+5 XP e +50 Miglia a volo)
+        IF v_prenotazione.utente_id IS NOT NULL THEN
+            UPDATE public.utenti_profili
+            SET xp_balance = xp_balance + 5,
+                miles_balance = miles_balance + 50
+            WHERE id = v_prenotazione.utente_id;
+        END IF;
+    END IF;
+
+    RETURN jsonb_build_object(
+        'success', true,
+        'codice_prenotazione', v_prenotazione.codice_prenotazione,
+        'check_in_status', true
+    );
 END;
 $$;
 
@@ -194,6 +306,7 @@ ALTER TABLE public.utenti_profili ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.voli ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.prenotazioni ENABLE ROW LEVEL SECURITY;
 
+-- Policy Profili
 DROP POLICY IF EXISTS "Profili: visualizzazione proprietario o admin" ON public.utenti_profili;
 CREATE POLICY "Profili: visualizzazione proprietario o admin"
     ON public.utenti_profili FOR SELECT
@@ -205,6 +318,7 @@ CREATE POLICY "Profili: aggiornamento proprio profilo"
     USING (auth.uid() = id)
     WITH CHECK (auth.uid() = id);
 
+-- Policy Voli
 DROP POLICY IF EXISTS "Voli: visibili a tutti" ON public.voli;
 CREATE POLICY "Voli: visibili a tutti"
     ON public.voli FOR SELECT
@@ -216,6 +330,7 @@ CREATE POLICY "Voli: gestione riservata admin"
     USING (public.is_admin())
     WITH CHECK (public.is_admin());
 
+-- Policy Prenotazioni
 DROP POLICY IF EXISTS "Prenotazioni: lettura per proprietario o admin" ON public.prenotazioni;
 CREATE POLICY "Prenotazioni: lettura per proprietario o admin"
     ON public.prenotazioni FOR SELECT
@@ -226,13 +341,12 @@ CREATE POLICY "Prenotazioni: inserimento consentito"
     ON public.prenotazioni FOR INSERT
     WITH CHECK (true);
 
-DROP POLICY IF EXISTS "Prenotazioni: gestione riservata admin" ON public.prenotazioni;
-CREATE POLICY "Prenotazioni: gestione riservata admin"
+DROP POLICY IF EXISTS "Prenotazioni: aggiornamento proprietario o admin" ON public.prenotazioni;
+CREATE POLICY "Prenotazioni: aggiornamento proprietario o admin"
     ON public.prenotazioni FOR UPDATE
-    USING (public.is_admin())
-    WITH CHECK (public.is_admin());
+    USING (auth.uid() = utente_id OR public.is_admin())
+    WITH CHECK (auth.uid() = utente_id OR public.is_admin());
 
--- Sblocco admin
-UPDATE auth.users SET email_confirmed_at = now() WHERE email_confirmed_at IS NULL;
+-- Promozione Super Admin
 UPDATE public.utenti_profili SET ruolo = 'admin' 
 WHERE id IN (SELECT id FROM auth.users WHERE LOWER(email) = 'dibiasioalessandro56@gmail.com');

@@ -1,11 +1,11 @@
 // =============================================================================
-// LOMBARDAIR - DASHBOARD PASSEGGERO & TABELLONE FIDS (passenger-dashboard.js)
+// LOMBARDAIR - DASHBOARD PASSEGGERO REALE (passenger-dashboard.js)
 // =============================================================================
 
-import { apiFetch, getSupabase } from './config.js';
-import { getCurrentUser, getUserProfile, logout } from './auth.js';
+import { getSupabase } from './config.js';
+import { getCurrentUser, logout } from './auth.js';
 
-// Riferimenti DOM Utente
+// Riferimenti DOM Utente & Club Flying Lomb
 const userDisplayName = document.getElementById('user-display-name');
 const userDisplayEmail = document.getElementById('user-display-email');
 const welcomeTitle = document.getElementById('welcome-title');
@@ -26,166 +26,240 @@ const listaBigliettiContainer = document.getElementById('lista-biglietti-contain
 const fidsTableBody = document.getElementById('fids-table-body');
 const fidsClock = document.getElementById('fids-clock');
 
+// Stato in memoria
+let currentUser = null;
+let currentProfile = null;
+let userBookings = [];
+
 // =============================================================================
-// 1. INIZIALIZZAZIONE & CONTROLLO AUTENTICAZIONE
+// 1. INIZIALIZZAZIONE & CONTROLLO SESSIONE
 // =============================================================================
 
 document.addEventListener('DOMContentLoaded', async () => {
-  await initPassengerDashboard();
   startFidsClock();
-  caricaTabelloneFIDS();
+  await fetchUserData();
+  await caricaTabelloneFIDS();
 });
-
-async function initPassengerDashboard() {
-  try {
-    const user = await getCurrentUser();
-    const profile = await getUserProfile();
-
-    if (user && userDisplayName && userDisplayEmail) {
-      const nomeCompleto = profile?.nome 
-        ? `${profile.nome} ${profile.cognome || ''}` 
-        : user.email.split('@')[0];
-
-      userDisplayName.textContent = nomeCompleto;
-      userDisplayEmail.textContent = user.email;
-      if (welcomeTitle) {
-        welcomeTitle.textContent = `Bentornato a bordo, ${profile?.nome || nomeCompleto}`;
-      }
-    } else {
-      // Fallback gentile se l'utente accede in modalità test
-      if (userDisplayName) userDisplayName.textContent = 'Passeggero Ospite';
-      if (userDisplayEmail) userDisplayEmail.textContent = 'ospite@lombardiair.it';
-    }
-
-    await caricaPrenotazioniUtente();
-
-  } catch (err) {
-    console.warn('Inizializzazione passeggero:', err);
-    await caricaPrenotazioniUtente(); // Carica fallback
-  }
-}
 
 if (btnLogout) {
   btnLogout.addEventListener('click', logout);
 }
 
+/**
+ * Recupera il profilo reale da Supabase e calcola lo stato "Flying Lomb"
+ */
+async function fetchUserData() {
+  const sb = getSupabase();
+  currentUser = await getCurrentUser();
+
+  if (!currentUser) {
+    window.location.href = 'login.html?redirect=passenger-dashboard.html';
+    return;
+  }
+
+  try {
+    const { data: profile, error } = await sb
+      .from('utenti_profili')
+      .select('*')
+      .eq('id', currentUser.id)
+      .single();
+
+    if (error && error.code !== 'PGRST116') {
+      throw error;
+    }
+
+    currentProfile = profile || {
+      nome: currentUser.user_metadata?.nome || currentUser.email.split('@')[0],
+      cognome: currentUser.user_metadata?.cognome || '',
+      loyalty_tier: 'Explorer',
+      miles_balance: 0,
+      xp_balance: 0
+    };
+
+    renderLoyaltyCard(currentProfile);
+    await fetchUserBookings();
+
+  } catch (err) {
+    showAlert(`Errore nel caricamento del profilo: ${err.message}`, true);
+  }
+}
+
+/**
+ * Renderizza il badge fedeltà Flying Lomb e la barra XP
+ */
+function renderLoyaltyCard(p) {
+  const nomeCompleto = `${p.nome || ''} ${p.cognome || ''}`.trim() || currentUser.email;
+  
+  if (userDisplayName) userDisplayName.textContent = nomeCompleto;
+  if (userDisplayEmail) userDisplayEmail.textContent = currentUser.email;
+  if (welcomeTitle) welcomeTitle.textContent = `Bentornato a bordo, ${p.nome || nomeCompleto}`;
+
+  const xp = p.xp_balance || 0;
+  let tier = p.loyalty_tier || 'Explorer';
+  let nextThreshold = 100;
+  let tierColor = 'bg-slate-700 text-slate-200';
+
+  if (tier === 'Platinum' || xp >= 300) {
+    tier = 'Platinum';
+    nextThreshold = 300;
+    tierColor = 'bg-slate-200 text-slate-950 font-black border border-slate-400';
+  } else if (tier === 'Gold' || xp >= 180) {
+    tier = 'Gold';
+    nextThreshold = 300;
+    tierColor = 'bg-amber-400 text-forest-950 font-black';
+  } else if (tier === 'Silver' || xp >= 100) {
+    tier = 'Silver';
+    nextThreshold = 180;
+    tierColor = 'bg-slate-300 text-forest-950 font-bold';
+  } else {
+    tier = 'Explorer';
+    nextThreshold = 100;
+    tierColor = 'bg-forest-800 text-lime-400 border border-lime-500/40';
+  }
+
+  const loyaltyContainer = document.querySelector('.bg-white\\/5.border.border-white\\/10');
+  if (loyaltyContainer) {
+    loyaltyContainer.innerHTML = `
+      <div class="w-12 h-12 rounded-2xl ${tierColor} flex items-center justify-center font-black text-xl shadow-md">
+        ★
+      </div>
+      <div>
+        <span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">Programma Flying Lomb</span>
+        <span class="text-base font-black text-white">LombardiAIR ${tier}</span>
+        <div class="flex items-center space-x-3 text-[11px] font-mono mt-0.5">
+          <span class="text-lime-400 font-bold">${p.miles_balance || 0} Miglia</span>
+          <span class="text-slate-400">•</span>
+          <span class="text-slate-300">${xp}/${nextThreshold} XP</span>
+        </div>
+      </div>
+    `;
+  }
+}
+
 // =============================================================================
-// 2. RECUPERO & RENDERING PRENOTAZIONI ATTIVE DELL'UTENTE
+// 2. RECUPERO PRENOTAZIONI REALI (CHECK-IN GUARD ATTIVA)
 // =============================================================================
 
-window.caricaPrenotazioniUtente = async function() {
+async function fetchUserBookings() {
   if (!listaBigliettiContainer) return;
 
   listaBigliettiContainer.innerHTML = `
-    <div class="p-8 text-center bg-white rounded-3xl border border-slate-200/80 text-xs font-semibold text-slate-400 animate-pulse">
-      Sincronizzazione titoli di viaggio con il server...
+    <div class="p-10 text-center bg-white rounded-3xl border border-slate-200/80 text-xs font-semibold text-slate-400 animate-pulse">
+      Caricamento titoli di viaggio dal database Supabase...
     </div>
   `;
 
   try {
-    let prenotazioni = [];
-    const user = await getCurrentUser();
-
-    // 1. Prova recupero da Supabase diretto se loggato
     const sb = getSupabase();
-    if (sb && user) {
-      const { data } = await sb
-        .from('prenotazioni')
-        .select('*, voli(*)')
-        .eq('utente_id', user.id)
-        .order('created_at', { ascending: false });
+    const { data, error } = await sb
+      .from('prenotazioni')
+      .select('*, voli(*)')
+      .eq('utente_id', currentUser.id)
+      .neq('stato', 'annullata')
+      .order('created_at', { ascending: false });
 
-      if (data && data.length > 0) {
-        prenotazioni = data.map(p => ({
-          ...p,
-          volo: p.voli || p.volo
-        }));
-      }
+    if (error) throw error;
+
+    userBookings = data || [];
+
+    // Stato vuoto elegante se l'utente non ha biglietti
+    if (userBookings.length === 0) {
+      listaBigliettiContainer.innerHTML = `
+        <div class="p-12 text-center bg-white rounded-3xl border border-slate-200/80 shadow-sm">
+          <div class="w-12 h-12 mx-auto rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400 text-xl font-bold mb-3">
+            ✈️
+          </div>
+          <h4 class="text-sm font-extrabold text-slate-800">Nessun volo prenotato</h4>
+          <p class="text-xs text-slate-400 mt-1 mb-5">Non risultano biglietti associati al tuo account.</p>
+          <a href="index.html#form-cerca-voli" class="inline-flex px-5 py-2.5 rounded-xl bg-lime-500 hover:bg-lime-400 text-forest-950 font-black text-xs uppercase tracking-wider shadow-cta-glow transition">
+            Prenota una Navetta Ora
+          </a>
+        </div>
+      `;
+      return;
     }
 
-    // 2. Mock Fallback realistico se l'utente non ha ancora effettuato acquisti
-    if (prenotazioni.length === 0) {
-      prenotazioni = [
-        {
-          id: 'mock-1',
-          codice_prenotazione: 'LM-9X2A7',
-          nome_passeggero: 'Mario',
-          cognome_passeggero: 'Rossi',
-          posto_assegnato: '04A',
-          prezzo_finale: 89.00,
-          stato: 'confermata',
-          volo: {
-            codice_volo: 'LM-104',
-            aeroporto_origine: 'LIN',
-            aeroporto_destinazione: 'MNZ',
-            data_ora_partenza: new Date(Date.now() + 3600000 * 4).toISOString(),
-            data_ora_arrivo: new Date(Date.now() + 3600000 * 4 + 1800000).toISOString(),
-            stato: 'programmato'
-          }
-        }
-      ];
-    }
-
-    // Rendering delle card di volo
-    listaBigliettiContainer.innerHTML = prenotazioni.map(b => {
-      const volo = b.volo || {};
-      const dPartenza = volo.data_ora_partenza ? new Date(volo.data_ora_partenza) : new Date();
+    listaBigliettiContainer.innerHTML = userBookings.map(b => {
+      const v = b.voli || {};
+      const dPartenza = v.data_ora_partenza ? new Date(v.data_ora_partenza) : new Date();
       const oraPartenza = dPartenza.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
       const dataStr = dPartenza.toLocaleDateString('it-IT', { day: '2-digit', month: 'short', year: 'numeric' });
+      const isCheckedIn = b.check_in_status === true;
+
+      // Elenco Servizi Extra attivi
+      const extraList = [];
+      if (b.extra_baggage) extraList.push('🧳 Bagaglio 23kg');
+      if (b.fast_track) extraList.push('⚡ Fast Track');
+      if (b.lounge_access) extraList.push('🍸 Lounge VIP');
 
       return `
-        <div class="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/90 shadow-card-soft hover:border-lime-500/40 hover:shadow-lg transition-all flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+        <div class="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/90 shadow-card-soft hover:shadow-lg transition-all flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
           
-          <!-- Sezione Sinistra: Dati Tratta -->
+          <!-- Sezione Tratta e Orari -->
           <div class="flex items-start sm:items-center space-x-4">
             <div class="w-16 h-16 rounded-2xl bg-forest-900 text-lime-400 flex flex-col items-center justify-center flex-shrink-0 shadow-sm">
               <span class="text-[9px] font-black tracking-widest uppercase opacity-70">VOLO</span>
-              <span class="text-sm font-black font-mono">${volo.codice_volo || 'LM-NAV'}</span>
+              <span class="text-sm font-black font-mono">${v.codice_volo || 'LMB'}</span>
             </div>
 
             <div>
               <div class="flex items-center space-x-2">
-                <span class="text-lg font-black text-slate-900">${volo.aeroporto_origine || 'LIN'}</span>
+                <span class="text-lg font-black text-slate-900">${v.aeroporto_origine || 'LIN'}</span>
                 <span class="text-lime-600 font-black text-sm">➔</span>
-                <span class="text-lg font-black text-slate-900">${volo.aeroporto_destinazione || 'MNZ'}</span>
-                <span class="ml-2 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800">
-                  ${b.stato || 'Confermato'}
-                </span>
+                <span class="text-lg font-black text-slate-900">${v.aeroporto_destinazione || 'MNZ'}</span>
+                
+                ${isCheckedIn ? `
+                  <span class="ml-2 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-300">
+                    ✓ Check-in Effettuato
+                  </span>
+                ` : `
+                  <span class="ml-2 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-100 text-amber-900 border border-amber-300">
+                    ● Check-in Richiesto
+                  </span>
+                `}
               </div>
               
               <div class="text-xs text-slate-500 font-semibold mt-1 space-x-2">
-                <span>Data: <b class="text-slate-800">${dataStr}</b></span>
-                <span>•</span>
-                <span>Partenza: <b class="text-slate-800">${oraPartenza}</b></span>
+                <span>Data: <b class="text-slate-800">${dataStr}</b> ore <b class="text-slate-800">${oraPartenza}</b></span>
                 <span>•</span>
                 <span>Passeggero: <b class="text-slate-800">${b.nome_passeggero} ${b.cognome_passeggero}</b></span>
               </div>
+
+              ${extraList.length > 0 ? `
+                <div class="mt-2 flex items-center gap-1.5 flex-wrap">
+                  ${extraList.map(item => `
+                    <span class="text-[10px] font-bold px-2 py-0.5 bg-slate-100 text-slate-700 rounded-md border border-slate-200">
+                      ${item}
+                    </span>
+                  `).join('')}
+                </div>
+              ` : ''}
             </div>
           </div>
 
-          <!-- Sezione Centro: Sedile & PNR -->
-          <div class="flex items-center space-x-6 border-t lg:border-t-0 pt-4 lg:pt-0 w-full lg:w-auto justify-between lg:justify-start">
-            <div class="text-left lg:text-center">
-              <span class="text-[10px] font-extrabold uppercase text-slate-400 block">Sedile Assegnato</span>
-              <span class="text-lg font-black text-lime-800 bg-lime-100 border border-lime-300 px-3 py-0.5 rounded-xl inline-block mt-0.5">
-                ${b.posto_assegnato}
+          <!-- Sezione Sedile, PNR & Azioni -->
+          <div class="flex items-center space-x-4 border-t lg:border-t-0 pt-4 lg:pt-0 w-full lg:w-auto justify-between lg:justify-end">
+            <div class="text-left lg:text-right">
+              <span class="text-[10px] font-extrabold uppercase text-slate-400 block">Sedile / PNR</span>
+              <span class="text-sm font-black text-forest-950 font-mono">
+                ${b.posto_assegnato} • <span class="text-lime-700">${b.codice_prenotazione}</span>
               </span>
             </div>
 
-            <div class="text-left lg:text-center">
-              <span class="text-[10px] font-extrabold uppercase text-slate-400 block">Codice PNR</span>
-              <span class="text-sm font-black font-mono text-forest-950 block mt-1 tracking-wider">
-                ${b.codice_prenotazione}
-              </span>
-            </div>
-
-            <!-- Pulsante Carta 3D -->
-            <div>
-              <a href="boarding-pass.html?pnr=${encodeURIComponent(b.codice_prenotazione)}" 
-                 class="px-5 py-3 rounded-2xl bg-lime-500 hover:bg-lime-400 text-forest-950 font-black text-xs uppercase tracking-wider shadow-cta-glow transition-all flex items-center space-x-2">
-                <span>Vedi Carta d'Imbarco 3D</span>
-                <span>→</span>
-              </a>
+            <div class="flex items-center space-x-2">
+              ${!isCheckedIn ? `
+                <button onclick="eseguiCheckIn('${b.codice_prenotazione}')" class="px-4 py-2.5 rounded-xl bg-lime-500 hover:bg-lime-400 text-forest-950 font-black text-xs uppercase tracking-wider shadow-cta-glow transition active:scale-95">
+                  ⚡ Esegui Check-in
+                </button>
+                <button disabled title="Effettua prima il check-in per sbloccare la carta 3D" class="px-4 py-2.5 rounded-xl bg-slate-100 text-slate-400 font-bold text-xs cursor-not-allowed border border-slate-200">
+                  Carta 3D 🔒
+                </button>
+              ` : `
+                <a href="boarding-pass.html?pnr=${encodeURIComponent(b.codice_prenotazione)}" class="px-5 py-2.5 rounded-xl bg-forest-900 hover:bg-forest-850 text-lime-400 font-black text-xs uppercase tracking-wider shadow-sm transition flex items-center space-x-1.5 hover:-translate-y-0.5">
+                  <span>Vedi Carta 3D</span>
+                  <span>→</span>
+                </a>
+              `}
             </div>
           </div>
 
@@ -196,78 +270,155 @@ window.caricaPrenotazioniUtente = async function() {
   } catch (err) {
     listaBigliettiContainer.innerHTML = `
       <div class="p-8 text-center text-red-600 font-bold text-xs bg-red-50 rounded-2xl border border-red-200">
-        Impossibile caricare i tuoi voli: ${err.message}
+        Errore durante il recupero dei biglietti: ${err.message}
       </div>
     `;
+  }
+}
+
+// =============================================================================
+// 3. ESECUZIONE CHECK-IN REALE CON RPC (+5 XP e +50 Miglia)
+// =============================================================================
+
+window.eseguiCheckIn = async function(codicePnr) {
+  try {
+    const sb = getSupabase();
+    showAlert(`Convalida check-in in corso per il PNR ${codicePnr}...`);
+
+    const { data, error } = await sb.rpc('esegui_checkin_online', { p_pnr: codicePnr });
+    if (error) throw error;
+
+    showAlert(`✓ Check-in completato per il biglietto ${codicePnr}! Accredito: +5 XP e +50 Miglia.`);
+    
+    // Ricarica i dati del profilo e la lista biglietti
+    await fetchUserData();
+
+  } catch (err) {
+    showAlert(`Impossibile completare il check-in: ${err.message}`, true);
   }
 };
 
 // =============================================================================
-// 3. TABELLONE VOLI "STILE AEROPORTO" (FIDS SIMULATION & LIVE DATA)
+// 4. TABELLONE FIDS REALE (DATI DA SUPABASE)
 // =============================================================================
 
 window.caricaTabelloneFIDS = async function() {
   if (!fidsTableBody) return;
 
-  // Dati FIDS ad alto realismo per la rete Milano-Monza
-  const fidsFlights = [
-    { time: '10:15', dest: 'MONZA HUB (MNZ)', flight: 'LM 102', gate: 'G02', status: 'DECOLLATO', statusType: 'departed' },
-    { time: '10:45', dest: 'MILANO LINATE (LIN)', flight: 'LM 104', gate: 'G04', status: 'IMBARCO', statusType: 'boarding' },
-    { time: '11:15', dest: 'MILANO MALPENSA (MXP)', flight: 'LM 208', gate: 'G01', status: 'CHECK-IN', statusType: 'checkin' },
-    { time: '11:45', dest: 'MONZA HUB (MNZ)', flight: 'LM 110', gate: 'G03', status: 'IN ORARIO', statusType: 'scheduled' },
-    { time: '12:15', dest: 'BERGAMO ORIO (BGY)', flight: 'LM 312', gate: 'G05', status: 'IN ORARIO', statusType: 'scheduled' },
-    { time: '12:45', dest: 'ROMA FIUMICINO (FCO)', flight: 'LM 450', gate: '---', status: 'CANCELLATO', statusType: 'cancelled' },
-  ];
+  try {
+    const sb = getSupabase();
+    const { data: voli, error } = await sb
+      .from('voli')
+      .select('*')
+      .neq('stato', 'cancellato')
+      .order('data_ora_partenza', { ascending: true })
+      .limit(10);
 
-  fidsTableBody.innerHTML = fidsFlights.map(f => {
-    let statusClass = 'text-slate-300';
-    let pulseClass = '';
+    if (error) throw error;
 
-    if (f.statusType === 'boarding') {
-      statusClass = 'text-lime-400 font-black';
-      pulseClass = 'animate-pulse';
-    } else if (f.statusType === 'checkin') {
-      statusClass = 'text-amber-400 font-black';
-    } else if (f.statusType === 'cancelled') {
-      statusClass = 'text-red-500 font-black';
-    } else if (f.statusType === 'departed') {
-      statusClass = 'text-slate-500 font-semibold';
+    if (!voli || voli.length === 0) {
+      fidsTableBody.innerHTML = `
+        <tr>
+          <td colspan="5" class="py-8 text-center text-slate-500 font-mono">
+            NESSUN VOLO PROGRAMMATO SUL RADAR CENTRALE
+          </td>
+        </tr>
+      `;
+      return;
     }
 
-    return `
-      <tr class="hover:bg-slate-900/80 transition font-mono border-b border-slate-900">
-        <td class="py-3.5 px-4 text-amber-300 font-black">${f.time}</td>
-        <td class="py-3.5 px-4 text-white font-black tracking-wider">${f.dest}</td>
-        <td class="py-3.5 px-4 text-lime-400 font-extrabold">${f.flight}</td>
-        <td class="py-3.5 px-4 text-center font-black ${f.gate !== '---' ? 'text-amber-400 bg-slate-900/60 rounded' : 'text-slate-600'}">${f.gate}</td>
-        <td class="py-3.5 px-4 text-right ${statusClass} ${pulseClass} tracking-widest uppercase">
-          ${f.status}
+    fidsTableBody.innerHTML = voli.map(v => {
+      const d = new Date(v.data_ora_partenza);
+      const orario = d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+      
+      let statusColor = 'text-slate-300';
+      let pulseAnim = '';
+      let statusText = 'IN ORARIO';
+
+      if (v.stato === 'in_volo') {
+        statusColor = 'text-lime-400 font-black';
+        pulseAnim = 'animate-pulse';
+        statusText = 'IMBARCO';
+      } else if (v.stato === 'atterrato') {
+        statusColor = 'text-slate-500 font-semibold';
+        statusText = 'DECOLLATO';
+      }
+
+      return `
+        <tr class="hover:bg-slate-900/80 transition font-mono border-b border-slate-900">
+          <td class="py-3.5 px-4 text-amber-300 font-black">${orario}</td>
+          <td class="py-3.5 px-4 text-white font-black tracking-wider">
+            ${v.aeroporto_destinazione} 
+            ${v.is_private_charter ? '<span class="ml-2 px-1.5 py-0.5 text-[9px] bg-amber-400/20 text-amber-300 border border-amber-400/30 rounded">VIP CHARTER</span>' : ''}
+          </td>
+          <td class="py-3.5 px-4 text-lime-400 font-extrabold">${v.codice_volo}</td>
+          <td class="py-3.5 px-4 text-center font-black text-amber-400">G04</td>
+          <td class="py-3.5 px-4 text-right ${statusColor} ${pulseAnim} tracking-widest uppercase">
+            ${statusText}
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+  } catch (err) {
+    fidsTableBody.innerHTML = `
+      <tr>
+        <td colspan="5" class="py-6 text-center text-red-400 font-mono text-xs">
+          Errore connessione radar FIDS: ${err.message}
         </td>
       </tr>
     `;
-  }).join('');
+  }
 };
 
-// Orologio Digitale FIDS Live (Aggiornamento al secondo)
-function startFidsClock() {
-  if (!fidsClock) return;
+// =============================================================================
+// 5. AGGIUNTA SERVIZI EXTRA SU SUPABASE
+// =============================================================================
 
-  function update() {
-    const now = new Date();
-    fidsClock.textContent = now.toLocaleTimeString('it-IT', { hour12: false });
+window.aggiungiServizioExtra = async function(tipoServizio, prezzo) {
+  if (userBookings.length === 0) {
+    showAlert("Non hai ancora prenotazioni attive su cui aggiungere servizi extra.", true);
+    return;
   }
 
+  // Seleziona la prima prenotazione attiva
+  const pnrAttivo = userBookings[0].codice_prenotazione;
+
+  try {
+    const sb = getSupabase();
+    const updatePayload = {};
+
+    if (tipoServizio.includes('Bagaglio')) updatePayload.extra_baggage = true;
+    if (tipoServizio.includes('Fast Track')) updatePayload.fast_track = true;
+    if (tipoServizio.includes('Lounge')) updatePayload.lounge_access = true;
+
+    const { error } = await sb
+      .from('prenotazioni')
+      .update(updatePayload)
+      .eq('codice_prenotazione', pnrAttivo);
+
+    if (error) throw error;
+
+    showAlert(`✓ Servizio ${tipoServizio} (€ ${prezzo.toFixed(2)}) aggiunto con successo al volo ${pnrAttivo}!`);
+    await fetchUserBookings();
+
+  } catch (err) {
+    showAlert(`Errore nell'acquisto del servizio: ${err.message}`, true);
+  }
+};
+
+// =============================================================================
+// UTILITY: OROLOGIO, ALERT & TABS
+// =============================================================================
+
+function startFidsClock() {
+  if (!fidsClock) return;
+  const update = () => {
+    fidsClock.textContent = new Date().toLocaleTimeString('it-IT', { hour12: false });
+  };
   update();
   setInterval(update, 1000);
 }
-
-// =============================================================================
-// 4. GESTIONE ACQUISTO SERVIZI EXTRA
-// =============================================================================
-
-window.aggiungiServizioExtra = function(nomeServizio, prezzo) {
-  showAlert(`Servizio "${nomeServizio}" (€ ${prezzo.toFixed(2)}) aggiunto alla tua prenotazione.`);
-};
 
 function showAlert(message, isError = false) {
   if (!alertBox) return;
@@ -282,22 +433,18 @@ function showAlert(message, isError = false) {
   setTimeout(() => alertBox.classList.add('hidden'), 5000);
 }
 
-// =============================================================================
-// 5. SWITCHER DEI TAB INTERNI
-// =============================================================================
-
 function resetTabs() {
   [tabBtnVoli, tabBtnFids, tabBtnExtra].forEach(btn => {
-    btn.className = 'px-5 py-2.5 rounded-xl text-slate-600 hover:text-slate-900 text-xs font-bold transition-all flex items-center space-x-2';
+    if (btn) btn.className = 'px-5 py-2.5 rounded-xl text-slate-600 hover:text-slate-900 text-xs font-bold transition-all flex items-center space-x-2';
   });
-  [sectionVoli, sectionFids, sectionExtra].forEach(sec => sec.classList.add('hidden'));
+  [sectionVoli, sectionFids, sectionExtra].forEach(sec => sec?.classList.add('hidden'));
 }
 
 if (tabBtnVoli) {
   tabBtnVoli.addEventListener('click', () => {
     resetTabs();
     tabBtnVoli.className = 'px-5 py-2.5 rounded-xl bg-forest-900 text-white text-xs font-extrabold shadow-sm transition-all flex items-center space-x-2';
-    sectionVoli.classList.remove('hidden');
+    sectionVoli?.classList.remove('hidden');
   });
 }
 
@@ -305,7 +452,7 @@ if (tabBtnFids) {
   tabBtnFids.addEventListener('click', () => {
     resetTabs();
     tabBtnFids.className = 'px-5 py-2.5 rounded-xl bg-forest-900 text-white text-xs font-extrabold shadow-sm transition-all flex items-center space-x-2';
-    sectionFids.classList.remove('hidden');
+    sectionFids?.classList.remove('hidden');
     caricaTabelloneFIDS();
   });
 }
@@ -314,6 +461,6 @@ if (tabBtnExtra) {
   tabBtnExtra.addEventListener('click', () => {
     resetTabs();
     tabBtnExtra.className = 'px-5 py-2.5 rounded-xl bg-forest-900 text-white text-xs font-extrabold shadow-sm transition-all flex items-center space-x-2';
-    sectionExtra.classList.remove('hidden');
+    sectionExtra?.classList.remove('hidden');
   });
 }

@@ -2,7 +2,7 @@
 // LOMBARDAIR - CONTROL ROOM AMMINISTRATIVA B2B (admin-dashboard.js)
 // =============================================================================
 
-import { apiFetch } from './config.js';
+import { getSupabase } from './config.js';
 import { requireAuth, logout } from './auth.js';
 
 // Riferimenti DOM Utente & Feedback
@@ -61,7 +61,6 @@ function formatDate(isoStr) {
 // =============================================================================
 
 async function initDashboard() {
-  // Guard di sicurezza: solo utenti con ruolo 'admin'
   const sessionData = await requireAuth('admin');
   if (!sessionData) return;
 
@@ -70,7 +69,6 @@ async function initDashboard() {
     userNameDisplay.textContent = `Operatore: ${profile?.nome || 'Alessandro'} ${profile?.cognome || 'Di Blasio'} (Admin)`;
   }
 
-  // Caricamento parallelo dati KPI e tabelle
   await Promise.all([
     loadStats(),
     loadFlightsTable(),
@@ -79,18 +77,31 @@ async function initDashboard() {
 }
 
 // =============================================================================
-// 1. CARICAMENTO METRICHE KPI
+// 1. CARICAMENTO METRICHE KPI REALI DA SUPABASE
 // =============================================================================
 
 async function loadStats() {
   try {
-    const stats = await apiFetch('/admin/statistiche');
-    if (kpiTotVoli) kpiTotVoli.textContent = stats.totale_voli_registrati ?? 0;
-    if (kpiVoliAttivi) kpiVoliAttivi.textContent = stats.voli_programmati ?? 0;
-    if (kpiTotPrenotazioni) kpiTotPrenotazioni.textContent = stats.biglietti_emessi ?? 0;
+    const sb = getSupabase();
+
+    const [voliRes, prenRes] = await Promise.all([
+      sb.from('voli').select('id, stato'),
+      sb.from('prenotazioni').select('id, prezzo_finale, stato').neq('stato', 'annullata')
+    ]);
+
+    const voli = voliRes.data || [];
+    const prenotazioni = prenRes.data || [];
+
+    const totVoli = voli.length;
+    const voliAttivi = voli.filter(v => v.stato === 'programmato' || v.stato === 'in_volo').length;
+    const totPrenotazioni = prenotazioni.length;
+    const incassoTotale = prenotazioni.reduce((acc, p) => acc + parseFloat(p.prezzo_finale || 0), 0);
+
+    if (kpiTotVoli) kpiTotVoli.textContent = totVoli;
+    if (kpiVoliAttivi) kpiVoliAttivi.textContent = voliAttivi;
+    if (kpiTotPrenotazioni) kpiTotPrenotazioni.textContent = totPrenotazioni;
     if (kpiTotIncassi) {
-      const incasso = parseFloat(stats.incasso_complessivo_eur || 0);
-      kpiTotIncassi.textContent = `€ ${incasso.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      kpiTotIncassi.textContent = `€ ${incassoTotale.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     }
   } catch (err) {
     console.error('Errore caricamento KPI:', err);
@@ -98,16 +109,21 @@ async function loadStats() {
 }
 
 // =============================================================================
-// 2. CARICAMENTO TABELLA FLOTTA VOLI & STATO VUOTO
+// 2. CARICAMENTO TABELLA FLOTTA VOLI & STATO CHARTER PRIVATO
 // =============================================================================
 
 async function loadFlightsTable() {
   if (!tableVoliBody) return;
 
   try {
-    const flights = await apiFetch('/voli');
-    
-    // STATO VUOTO ELEGANTE (Nessun errore rosso sgradevole)
+    const sb = getSupabase();
+    const { data: flights, error } = await sb
+      .from('voli')
+      .select('*')
+      .order('data_ora_partenza', { ascending: true });
+
+    if (error) throw error;
+
     if (!flights || flights.length === 0) {
       tableVoliBody.innerHTML = `
         <tr>
@@ -116,8 +132,8 @@ async function loadFlightsTable() {
               <div class="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center text-xl mb-3">
                 ✈️
               </div>
-              <h4 class="text-sm font-extrabold text-slate-800">Nessun volo registrato al momento</h4>
-              <p class="text-xs text-slate-400 mt-1 mb-4">La flotta non ha tratte schedulate. Clicca su "+ Aggiungi Nuovo Volo" per iniziare.</p>
+              <h4 class="text-sm font-extrabold text-slate-800">Nessun volo registrato nel database</h4>
+              <p class="text-xs text-slate-400 mt-1 mb-4">Clicca su "+ Aggiungi Nuovo Volo" per programmare la prima tratta.</p>
               <button onclick="document.getElementById('btn-open-modal-volo')?.click()" class="px-4 py-2 rounded-xl bg-lime-500 hover:bg-lime-400 text-forest-950 font-bold text-xs shadow-sm transition">
                 + Schedula Tratta Ora
               </button>
@@ -129,7 +145,6 @@ async function loadFlightsTable() {
     }
 
     tableVoliBody.innerHTML = flights.map(v => {
-      const isSoldOut = v.posti_disponibili <= 0;
       const isCancellato = v.stato === 'cancellato';
 
       return `
@@ -143,8 +158,8 @@ async function loadFlightsTable() {
             <span class="font-extrabold text-slate-900">${v.aeroporto_destinazione}</span>
           </td>
           <td class="px-6 py-4 text-xs font-semibold">
-            <div class="text-slate-900"><b>Dep:</b> ${formatDate(v.data_ora_partenza)}</div>
-            <div class="text-slate-400"><b>Arr:</b> ${formatDate(v.data_ora_arrivo)}</div>
+            <div class="text-slate-900"><b>Partenza:</b> ${formatDate(v.data_ora_partenza)}</div>
+            <div class="text-slate-400"><b>Arrivo:</b> ${formatDate(v.data_ora_arrivo)}</div>
           </td>
           <td class="px-6 py-4 text-center">
             <span class="font-black ${v.posti_disponibili <= 5 ? 'text-red-600' : 'text-slate-800'}">
@@ -156,7 +171,14 @@ async function loadFlightsTable() {
             € ${parseFloat(v.prezzo_base).toFixed(2)}
           </td>
           <td class="px-6 py-4">
-            <span class="badge-status ${v.stato}">${v.stato}</span>
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <span class="badge-status ${v.stato}">${v.stato}</span>
+              ${v.is_private_charter ? `
+                <span class="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-amber-100 text-amber-900 border border-amber-300">
+                  VIP Charter
+                </span>
+              ` : ''}
+            </div>
           </td>
           <td class="px-6 py-4 text-right">
             ${!isCancellato ? `
@@ -171,15 +193,22 @@ async function loadFlightsTable() {
       `;
     }).join('');
 
-    // Event listener cancellazione voli
+    // Event listener cancellazione voli su Supabase
     document.querySelectorAll('.btn-delete-volo').forEach(btn => {
       btn.addEventListener('click', async () => {
         const id = btn.getAttribute('data-id');
         const codice = btn.getAttribute('data-codice');
         if (confirm(`Confermi la cancellazione del volo ${codice}? L'operazione aggiornerà lo stato in 'cancellato'.`)) {
           try {
-            await apiFetch(`/admin/voli/${id}`, { method: 'DELETE' });
-            showAlert(`Volo ${codice} contrassegnato come cancellato.`);
+            const sb = getSupabase();
+            const { error } = await sb
+              .from('voli')
+              .update({ stato: 'cancellato' })
+              .eq('id', id);
+
+            if (error) throw error;
+
+            showAlert(`Volo ${codice} contrassegnato come cancellato con successo.`);
             await loadFlightsTable();
             await loadStats();
           } catch (err) {
@@ -201,69 +230,90 @@ async function loadFlightsTable() {
 }
 
 // =============================================================================
-// 3. CARICAMENTO MANIFEST PASSEGGERI & STATO VUOTO
+// 3. CARICAMENTO MANIFEST PASSEGGERI (STATO CHECK-IN & SERVIZI EXTRA)
 // =============================================================================
 
 async function loadPassengersTable() {
   if (!tablePasseggeriBody) return;
 
   try {
-    const bookings = await apiFetch('/admin/prenotazioni');
-    
-    // STATO VUOTO ELEGANTE MANIFEST
+    const sb = getSupabase();
+    const { data: bookings, error } = await sb
+      .from('prenotazioni')
+      .select('*, voli(*)')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
     if (!bookings || bookings.length === 0) {
       tablePasseggeriBody.innerHTML = `
         <tr>
-          <td colspan="8" class="px-6 py-16 text-center">
-            <div class="max-w-sm mx-auto flex flex-col items-center">
-              <div class="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center text-xl mb-3">
-                📋
-              </div>
-              <h4 class="text-sm font-extrabold text-slate-800">Nessun biglietto emesso</h4>
-              <p class="text-xs text-slate-400 mt-1">Non ci sono ancora prenotazioni registrate nel sistema per le tratte attive.</p>
-            </div>
+          <td colspan="8" class="px-6 py-16 text-center text-slate-400 font-bold">
+            Nessun biglietto emesso nel sistema.
           </td>
         </tr>
       `;
       return;
     }
 
-    tablePasseggeriBody.innerHTML = bookings.map(b => `
-      <tr class="hover:bg-slate-50/80 transition border-b border-slate-100">
-        <td class="px-6 py-4 font-mono font-black text-forest-950 text-sm">
-          ${b.codice_prenotazione}
-        </td>
-        <td class="px-6 py-4 font-bold text-slate-900">
-          ${b.nome_passeggero} ${b.cognome_passeggero}
-        </td>
-        <td class="px-6 py-4 uppercase text-xs font-mono text-slate-600 font-semibold">
-          ${b.documento_identita}
-        </td>
-        <td class="px-6 py-4 text-xs font-bold text-slate-800">
-          ${b.volo ? `${b.volo.codice_volo} (${b.volo.aeroporto_origine} ➔ ${b.volo.aeroporto_destinazione})` : 'N/D'}
-        </td>
-        <td class="px-6 py-4 text-center">
-          <span class="font-black text-xs text-lime-800 bg-lime-100 border border-lime-300 px-2.5 py-1 rounded-lg">
-            ${b.posto_assegnato}
-          </span>
-        </td>
-        <td class="px-6 py-4 font-black font-mono text-slate-900">
-          € ${parseFloat(b.prezzo_finale).toFixed(2)}
-        </td>
-        <td class="px-6 py-4 text-xs text-slate-500 font-semibold">
-          ${formatDate(b.created_at)}
-        </td>
-        <td class="px-6 py-4">
-          <span class="badge-status ${b.stato}">${b.stato}</span>
-        </td>
-      </tr>
-    `).join('');
+    tablePasseggeriBody.innerHTML = bookings.map(b => {
+      const v = b.voli || {};
+      const isCheckedIn = b.check_in_status === true;
+
+      // Badge Servizi Extra Reali
+      const extras = [];
+      if (b.extra_baggage) extras.push('<span class="px-2 py-0.5 bg-blue-50 text-blue-800 rounded border border-blue-200 text-[10px] font-bold">🧳 23kg</span>');
+      if (b.fast_track) extras.push('<span class="px-2 py-0.5 bg-lime-50 text-forest-900 rounded border border-lime-300 text-[10px] font-bold">⚡ Fast Track</span>');
+      if (b.lounge_access) extras.push('<span class="px-2 py-0.5 bg-amber-50 text-amber-800 rounded border border-amber-300 text-[10px] font-bold">🍸 Lounge</span>');
+
+      return `
+        <tr class="hover:bg-slate-50/80 transition border-b border-slate-100 text-xs">
+          <td class="px-6 py-4 font-mono font-black text-forest-950 text-sm">
+            ${b.codice_prenotazione}
+          </td>
+          <td class="px-6 py-4 font-bold text-slate-900">
+            ${b.nome_passeggero} ${b.cognome_passeggero}
+            <span class="block text-[10px] text-slate-400 font-mono uppercase">${b.documento_identita}</span>
+          </td>
+          <td class="px-6 py-4 font-bold text-slate-800">
+            ${v.codice_volo || 'LMB'} (${v.aeroporto_origine || ''} ➔ ${v.aeroporto_destinazione || ''})
+          </td>
+          <td class="px-6 py-4 text-center">
+            <span class="font-black text-xs text-lime-800 bg-lime-100 border border-lime-300 px-2.5 py-1 rounded-lg">
+              ${b.posto_assegnato}
+            </span>
+          </td>
+          <td class="px-6 py-4">
+            ${isCheckedIn ? `
+              <span class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase bg-emerald-100 text-emerald-800 border border-emerald-300">
+                ✓ Check-in Effettuato
+              </span>
+            ` : `
+              <span class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase bg-rose-100 text-rose-800 border border-rose-200">
+                ✕ Non Effettuato
+              </span>
+            `}
+          </td>
+          <td class="px-6 py-4">
+            <div class="flex items-center gap-1.5 flex-wrap">
+              ${extras.length > 0 ? extras.join('') : '<span class="text-slate-400 italic text-[11px]">Nessuno</span>'}
+            </div>
+          </td>
+          <td class="px-6 py-4 font-black font-mono text-slate-900">
+            € ${parseFloat(b.prezzo_finale).toFixed(2)}
+          </td>
+          <td class="px-6 py-4 text-xs text-slate-500 font-semibold">
+            ${formatDate(b.created_at)}
+          </td>
+        </tr>
+      `;
+    }).join('');
 
   } catch (err) {
     tablePasseggeriBody.innerHTML = `
       <tr>
         <td colspan="8" class="px-6 py-10 text-center text-red-600 font-semibold text-xs">
-          Errore caricamento manifest: ${err.message}
+          Errore caricamento manifest passeggeri: ${err.message}
         </td>
       </tr>
     `;
@@ -271,7 +321,7 @@ async function loadPassengersTable() {
 }
 
 // =============================================================================
-// 4. GESTIONE MODALE & REGISTRAZIONE NUOVO VOLO
+// 4. GESTIONE MODALE & REGISTRAZIONE NUOVO VOLO / CHARTER
 // =============================================================================
 
 function toggleModal(show) {
@@ -297,23 +347,29 @@ if (formCreateFlight) {
     }
 
     try {
+      const capienza = parseInt(document.getElementById('nuovo-posti').value, 10);
+      const isCharter = document.getElementById('nuovo-charter')?.checked || false;
+
       const payload = {
         codice_volo: document.getElementById('nuovo-codice').value.trim().toUpperCase(),
         aeroporto_origine: document.getElementById('nuovo-origine').value,
         aeroporto_destinazione: document.getElementById('nuovo-destinazione').value.trim().toUpperCase(),
         data_ora_partenza: new Date(document.getElementById('nuovo-partenza').value).toISOString(),
         data_ora_arrivo: new Date(document.getElementById('nuovo-arrivo').value).toISOString(),
-        posti_totali: parseInt(document.getElementById('nuovo-posti').value, 10),
-        prezzo_base: parseFloat(document.getElementById('nuovo-prezzo').value)
+        posti_totali: capienza,
+        posti_disponibili: capienza,
+        prezzo_base: parseFloat(document.getElementById('nuovo-prezzo').value),
+        stato: 'programmato',
+        is_private_charter: isCharter
       };
 
-      await apiFetch('/admin/voli', {
-        method: 'POST',
-        body: JSON.stringify(payload)
-      });
+      const sb = getSupabase();
+      const { error } = await sb.from('voli').insert([payload]);
+
+      if (error) throw error;
 
       toggleModal(false);
-      showAlert(`Nuovo volo ${payload.codice_volo} registrato con successo nel tabellone.`);
+      showAlert(`Nuovo volo ${payload.codice_volo} (${isCharter ? 'VIP Charter' : 'Di Linea'}) registrato con successo nel tabellone.`);
       await loadFlightsTable();
       await loadStats();
 
@@ -353,5 +409,5 @@ if (tabPasseggeri) {
 
 if (btnLogout) btnLogout.addEventListener('click', logout);
 
-// Avvio della dashboard
+// Avvio automatico
 initDashboard();

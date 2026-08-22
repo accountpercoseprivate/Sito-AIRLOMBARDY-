@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Control Room Flotta B2B | LombardiAIR</title>
 
-  <!-- Google Fonts: Plus Jakarta Sans -->
+  <!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,600;0,700;0,800;1,500&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
 
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -35,8 +35,9 @@
             }
           },
           boxShadow: {
-            'card-soft': '0 10px 30px -5px rgba(11, 37, 25, 0.05), 0 0 1px 1px rgba(0, 0, 0, 0.03)',
-            'cta-glow': '0 8px 20px -4px rgba(132, 204, 22, 0.4)',
+            'card-soft': '0 4px 20px -2px rgba(11, 37, 25, 0.05), 0 2px 6px -1px rgba(0, 0, 0, 0.02)',
+            'card-hover': '0 12px 30px -4px rgba(11, 37, 25, 0.08), 0 4px 12px -2px rgba(0, 0, 0, 0.04)',
+            'cta-glow': '0 8px 24px -4px rgba(132, 204, 22, 0.45)',
           }
         }
       }
@@ -50,48 +51,66 @@
 <body class="min-h-full flex flex-col bg-[#F1F5F9] text-slate-900 font-sans antialiased selection:bg-lime-500 selection:text-forest-950">
 
   <!-- ========================================================================= -->
-  <!-- 1. HEADER CONTROL ROOM AZIENDALE                                          -->
+  <!-- 1. TOPBAR & HEADER CONTROL ROOM                                           -->
   <!-- ========================================================================= -->
-  <header class="bg-forest-900 border-b border-white/10 sticky top-0 z-40 shadow-lg shadow-forest-950/20">
+  <header class="bg-forest-900 border-b border-white/10 sticky top-0 z-40 shadow-lg shadow-forest-950/20 backdrop-blur-md">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
       
       <!-- Brand & Badge B2B -->
       <div class="flex items-center space-x-4">
         <a href="index.html" class="flex items-center space-x-3 group">
-          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-lime-400 to-lime-500 flex items-center justify-center text-forest-950 font-black text-xl shadow-md shadow-lime-500/20">
-            L
+          <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-forest-800 to-forest-950 p-2 border border-lime-500/30 flex items-center justify-center shadow-md group-hover:scale-105 transition-transform duration-200">
+            <svg viewBox="0 0 100 80" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 28C28 28 48 38 52 58C42 53 26 48 16 38C13 35 12 31 12 28Z" fill="#145A32"/>
+              <path d="M18 38C34 38 52 48 55 63C45 58 30 53 22 45C19 42 18 40 18 38Z" fill="#27AE60"/>
+              <path d="M25 48C38 48 53 55 58 68C48 63 35 58 28 53C26 51 25 49 25 48Z" fill="#A3E635"/>
+              <path d="M52 58C68 32 88 28 92 38C96 48 82 68 58 68C70 65 80 54 78 44C74 34 60 42 52 58Z" fill="url(#limeGradAdmin)"/>
+              <path d="M64 40L68 34L70 35L68 40L75 42L77 41L78 42L75 45L72 49L70 49L71 45L65 43L63 45L62 44L64 40Z" fill="#FFFFFF"/>
+              <defs>
+                <linearGradient id="limeGradAdmin" x1="50" y1="25" x2="90" y2="65" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#A3E635"/>
+                  <stop offset="1" stop-color="#65A30D"/>
+                </linearGradient>
+              </defs>
+            </svg>
           </div>
           <div>
             <div class="flex items-center space-x-2">
-              <span class="text-lg font-extrabold tracking-tight text-white leading-none">Lombardi<span class="text-lime-400">AIR</span></span>
-              <span class="px-2 py-0.5 rounded-md bg-lime-400 text-forest-950 text-[10px] font-black uppercase tracking-wider">
+              <span class="text-xl font-extrabold tracking-tight text-white leading-none">Lombardi<span class="text-lime-400">AIR</span></span>
+              <span class="px-2 py-0.5 rounded-md bg-lime-400 text-forest-950 text-[10px] font-black uppercase tracking-wider shadow-sm">
                 Admin B2B
               </span>
             </div>
-            <span class="text-[10px] uppercase tracking-widest text-slate-400 font-bold block mt-1">Cruscotto Direzionale & Flotta</span>
+            <span class="text-[10px] uppercase tracking-widest text-slate-400 font-bold block mt-1">Cruscotto Direzionale & Control Room Flotta</span>
           </div>
         </a>
 
         <div class="hidden lg:flex items-center space-x-2 pl-6 border-l border-white/10 text-xs font-semibold text-slate-300">
-          <span class="w-2 h-2 rounded-full bg-lime-400 animate-pulse"></span>
-          <span>Control Room Live</span>
+          <span class="relative flex h-2 w-2">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-lime-400 opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-2 w-2 bg-lime-500"></span>
+          </span>
+          <span class="font-mono text-[11px] text-lime-400">RADAR CENTRALE OPERATIVO</span>
         </div>
       </div>
 
-      <!-- Area Operatore & Logout -->
+      <!-- Area Operatore & Azioni -->
       <div class="flex items-center space-x-4">
         <div class="hidden sm:flex flex-col text-right">
-          <span id="admin-user-name" class="text-xs font-bold text-white">Operatore Verificato</span>
-          <span class="text-[10px] text-lime-400 font-mono font-medium">Sessione Crittografata Supabase</span>
+          <span id="admin-user-name" class="text-xs font-bold text-white tracking-wide">Operatore Verificato</span>
+          <span class="text-[10px] text-slate-400 font-mono font-medium flex items-center justify-end space-x-1">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+            <span>Sessione Crittografata Supabase</span>
+          </span>
         </div>
 
-        <a href="index.html" class="hidden md:inline-flex items-center space-x-1 text-xs text-slate-300 hover:text-white px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 transition">
-          <span>Homepage</span>
-          <span>↗</span>
+        <a href="index.html" class="hidden md:inline-flex items-center space-x-1.5 text-xs text-slate-300 hover:text-white px-3.5 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition">
+          <span>Vista Passeggeri</span>
+          <span class="text-lime-400 text-xs">↗</span>
         </a>
 
-        <button id="btn-admin-logout" class="px-3.5 py-2 rounded-xl bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 text-red-200 text-xs font-bold transition flex items-center space-x-1.5">
-          <span>Esci</span>
+        <button id="btn-admin-logout" class="px-3.5 py-2 rounded-xl bg-red-500/15 hover:bg-red-500/25 border border-red-500/30 text-red-300 hover:text-red-200 text-xs font-bold transition flex items-center space-x-1.5 active:scale-95">
+          <span>Disconnetti</span>
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
           </svg>
@@ -106,87 +125,108 @@
   <!-- ========================================================================= -->
   <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow w-full">
     
-    <!-- Box Notifiche Dinamiche -->
-    <div id="admin-alert" class="hidden mb-6 p-4 rounded-2xl text-xs font-bold leading-relaxed border transition-all"></div>
+    <!-- Box Notifiche Dinamiche Feedback -->
+    <div id="admin-alert" class="hidden mb-6 p-4 rounded-2xl text-xs font-bold leading-relaxed border shadow-sm transition-all duration-300"></div>
 
     <!-- ======================================================================= -->
-    <!-- 4 CARD KPI (Metriche di Prestazione Flotta)                             -->
+    <!-- 4 CARD KPI (Metriche Direzionali Reali)                                 -->
     <!-- ======================================================================= -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
       
-      <!-- KPI 1: Voli Registrati -->
-      <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-card-soft relative overflow-hidden group hover:border-slate-300 transition-all">
-        <div class="absolute top-0 left-0 right-0 h-1 bg-slate-300"></div>
-        <div class="flex items-center justify-between mb-2">
+      <!-- KPI 1: Voli a Sistema -->
+      <div class="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-card-soft hover:shadow-card-hover transition-all duration-200 relative overflow-hidden group">
+        <div class="absolute top-0 left-0 right-0 h-1 bg-slate-300 group-hover:bg-slate-400 transition-colors"></div>
+        <div class="flex items-center justify-between mb-3">
           <span class="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">Tratte a Sistema</span>
-          <span class="w-7 h-7 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center text-xs font-bold">✈️</span>
+          <div class="w-8 h-8 rounded-xl bg-slate-100 border border-slate-200 text-slate-600 flex items-center justify-center text-xs font-bold">
+            ✈️
+          </div>
         </div>
         <div class="flex items-baseline space-x-2">
-          <span id="kpi-totale-voli" class="text-3xl font-extrabold text-slate-900 tracking-tight font-mono">---</span>
-          <span class="text-[11px] font-semibold text-slate-400">voli totali</span>
+          <span id="kpi-totale-voli" class="text-3xl font-extrabold text-slate-900 tracking-tight font-mono">0</span>
+          <span class="text-[11px] font-semibold text-slate-400">schedulati</span>
+        </div>
+        <div class="mt-3 flex items-center text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+          <span>Hub LIN • MXP • MNZ</span>
         </div>
       </div>
 
-      <!-- KPI 2: Voli Operativi -->
-      <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-card-soft relative overflow-hidden group hover:border-lime-500/40 transition-all">
+      <!-- KPI 2: Flotta Operativa -->
+      <div class="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-card-soft hover:shadow-card-hover transition-all duration-200 relative overflow-hidden group">
         <div class="absolute top-0 left-0 right-0 h-1 bg-lime-500"></div>
-        <div class="flex items-center justify-between mb-2">
+        <div class="flex items-center justify-between mb-3">
           <span class="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">Flotta Operativa</span>
-          <span class="w-7 h-7 rounded-lg bg-lime-100 text-lime-800 flex items-center justify-center text-xs font-bold">🟢</span>
+          <div class="w-8 h-8 rounded-xl bg-lime-100 border border-lime-200 text-forest-900 flex items-center justify-center text-xs font-bold">
+            🟢
+          </div>
         </div>
         <div class="flex items-baseline space-x-2">
-          <span id="kpi-voli-attivi" class="text-3xl font-extrabold text-forest-800 tracking-tight font-mono">---</span>
-          <span class="text-[11px] font-semibold text-emerald-600">attivi ora</span>
+          <span id="kpi-voli-attivi" class="text-3xl font-extrabold text-forest-900 tracking-tight font-mono">0</span>
+          <span class="text-[11px] font-bold text-lime-600">attivi ora</span>
+        </div>
+        <div class="mt-3 flex items-center text-[10px] font-bold text-emerald-700 uppercase tracking-wider">
+          <span class="inline-block w-1.5 h-1.5 rounded-full bg-lime-500 mr-1.5"></span>
+          <span>Stato: Regolare</span>
         </div>
       </div>
 
-      <!-- KPI 3: Biglietti Venduti -->
-      <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-card-soft relative overflow-hidden group hover:border-slate-300 transition-all">
-        <div class="absolute top-0 left-0 right-0 h-1 bg-slate-300"></div>
-        <div class="flex items-center justify-between mb-2">
-          <span class="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">Passeggeri Emessi</span>
-          <span class="w-7 h-7 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center text-xs font-bold">🎟️</span>
+      <!-- KPI 3: Passeggeri Emessi -->
+      <div class="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-card-soft hover:shadow-card-hover transition-all duration-200 relative overflow-hidden group">
+        <div class="absolute top-0 left-0 right-0 h-1 bg-slate-300 group-hover:bg-slate-400 transition-colors"></div>
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">Titoli Emessi</span>
+          <div class="w-8 h-8 rounded-xl bg-slate-100 border border-slate-200 text-slate-600 flex items-center justify-center text-xs font-bold">
+            🎟️
+          </div>
         </div>
         <div class="flex items-baseline space-x-2">
-          <span id="kpi-totale-prenotazioni" class="text-3xl font-extrabold text-slate-900 tracking-tight font-mono">---</span>
-          <span class="text-[11px] font-semibold text-slate-400">titoli confermati</span>
+          <span id="kpi-totale-prenotazioni" class="text-3xl font-extrabold text-slate-900 tracking-tight font-mono">0</span>
+          <span class="text-[11px] font-semibold text-slate-400">passeggeri</span>
+        </div>
+        <div class="mt-3 flex items-center text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+          <span>Carte 3D Validate</span>
         </div>
       </div>
 
-      <!-- KPI 4: Incasso Totale -->
-      <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-card-soft relative overflow-hidden group hover:border-lime-500/40 transition-all">
+      <!-- KPI 4: Ricavi Complessivi -->
+      <div class="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-card-soft hover:shadow-card-hover transition-all duration-200 relative overflow-hidden group">
         <div class="absolute top-0 left-0 right-0 h-1 bg-lime-500"></div>
-        <div class="flex items-center justify-between mb-2">
+        <div class="flex items-center justify-between mb-3">
           <span class="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">Ricavi Complessivi</span>
-          <span class="w-7 h-7 rounded-lg bg-forest-900 text-lime-400 flex items-center justify-center text-xs font-bold">€</span>
+          <div class="w-8 h-8 rounded-xl bg-forest-900 text-lime-400 flex items-center justify-center text-xs font-bold font-mono">
+            €
+          </div>
         </div>
         <div class="flex items-baseline space-x-2">
-          <span id="kpi-totale-incassi" class="text-3xl font-extrabold text-forest-950 tracking-tight font-mono">€ 0.00</span>
+          <span id="kpi-totale-incassi" class="text-3xl font-extrabold text-forest-950 tracking-tight font-mono">€ 0,00</span>
+        </div>
+        <div class="mt-3 flex items-center text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+          <span>Tariffa Fissa Regionale</span>
         </div>
       </div>
 
     </div>
 
     <!-- ======================================================================= -->
-    <!-- 3. BARRA AZIONI & SWITCHER TAB (Segmented Control)                      -->
+    <!-- 3. ACTION BAR & SEGMENTED SWITCHER                                       -->
     <!-- ======================================================================= -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
       
       <!-- Segmented Switcher -->
-      <div class="inline-flex p-1.5 rounded-2xl bg-slate-200/80 border border-slate-300/60 shadow-inner">
+      <div class="inline-flex p-1.5 rounded-2xl bg-slate-200/80 border border-slate-300/70 shadow-inner">
         <button id="tab-voli" class="px-5 py-2.5 rounded-xl bg-forest-900 text-white text-xs font-extrabold shadow-sm transition-all flex items-center space-x-2">
           <span>✈️</span>
           <span>Gestione Flotta & Tratte</span>
         </button>
         <button id="tab-passeggeri" class="px-5 py-2.5 rounded-xl text-slate-600 hover:text-slate-900 text-xs font-bold transition-all flex items-center space-x-2">
           <span>📋</span>
-          <span>Manifest Passeggeri & Biglietti</span>
+          <span>Manifest Passeggeri & Check-in</span>
         </button>
       </div>
 
-      <!-- Bottone Azione Principale Lime -->
+      <!-- Pulsante Schedula Volo -->
       <button id="btn-open-modal-volo" class="px-5 py-3 rounded-2xl bg-lime-500 hover:bg-lime-400 active:bg-lime-600 text-forest-950 font-extrabold text-xs uppercase tracking-wider shadow-cta-glow hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 flex items-center justify-center space-x-2">
-        <span class="text-base font-black">+</span>
+        <span class="text-base font-black leading-none">+</span>
         <span>Aggiungi Nuovo Volo</span>
       </button>
     </div>
@@ -194,30 +234,29 @@
     <!-- ======================================================================= -->
     <!-- SEZIONE 1: TABELLA FLOTTA VOLI                                          -->
     <!-- ======================================================================= -->
-    <div id="section-voli" class="bg-white rounded-3xl border border-slate-200/80 shadow-card-soft overflow-hidden">
+    <div id="section-voli" class="bg-white rounded-3xl border border-slate-200/90 shadow-card-soft overflow-hidden">
       <div class="overflow-x-auto">
-        <table class="w-full text-left text-xs">
-          <thead class="bg-slate-50/90 border-b border-slate-200 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+        <table class="w-full text-left text-xs border-collapse">
+          <thead class="bg-slate-50/95 border-b border-slate-200/80 text-[10px] font-black text-slate-500 uppercase tracking-widest">
             <tr>
-              <th class="px-6 py-4">Codice Volo</th>
-              <th class="px-6 py-4">Tratta Operativa</th>
-              <th class="px-6 py-4">Schedulazione Partenza / Arrivo</th>
-              <th class="px-6 py-4 text-center">Posti a Bordo</th>
-              <th class="px-6 py-4">Tariffa Base</th>
-              <th class="px-6 py-4">Stato Operativo</th>
-              <th class="px-6 py-4 text-right">Azioni Flotta</th>
+              <th class="px-6 py-4.5">Codice Volo</th>
+              <th class="px-6 py-4.5">Tratta Operativa</th>
+              <th class="px-6 py-4.5">Schedulazione Oraria</th>
+              <th class="px-6 py-4.5 text-center">Posti a Bordo</th>
+              <th class="px-6 py-4.5">Tariffa Base</th>
+              <th class="px-6 py-4.5">Tipologia & Stato</th>
+              <th class="px-6 py-4.5 text-right">Azioni Flotta</th>
             </tr>
           </thead>
           <tbody id="table-voli-body" class="divide-y divide-slate-100 font-medium text-slate-700">
-            <!-- Stato di Caricamento / Scheletro Iniziale -->
             <tr>
-              <td colspan="7" class="px-6 py-16 text-center">
-                <div class="max-w-xs mx-auto text-center">
-                  <div class="w-12 h-12 mx-auto rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400 text-xl font-bold mb-3">
+              <td colspan="7" class="px-6 py-20 text-center">
+                <div class="max-w-sm mx-auto flex flex-col items-center">
+                  <div class="w-14 h-14 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center text-2xl mb-3 shadow-inner">
                     ✈️
                   </div>
-                  <p class="text-sm font-extrabold text-slate-800">Sincronizzazione orari in corso...</p>
-                  <p class="text-xs text-slate-400 mt-1">Connessione al database Supabase per il recupero delle tratte.</p>
+                  <h4 class="text-sm font-extrabold text-slate-800">Sincronizzazione orari in corso...</h4>
+                  <p class="text-xs text-slate-400 mt-1">Connessione al database Supabase per il caricamento della flotta.</p>
                 </div>
               </td>
             </tr>
@@ -227,32 +266,32 @@
     </div>
 
     <!-- ======================================================================= -->
-    <!-- SEZIONE 2: TABELLA MANIFEST PASSEGGERI                                 -->
+    <!-- SEZIONE 2: TABELLA MANIFEST PASSEGGERI (CON CHECK-IN E SERVIZI EXTRA)   -->
     <!-- ======================================================================= -->
-    <div id="section-passeggeri" class="hidden bg-white rounded-3xl border border-slate-200/80 shadow-card-soft overflow-hidden">
+    <div id="section-passeggeri" class="hidden bg-white rounded-3xl border border-slate-200/90 shadow-card-soft overflow-hidden">
       <div class="overflow-x-auto">
-        <table class="w-full text-left text-xs">
-          <thead class="bg-slate-50/90 border-b border-slate-200 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+        <table class="w-full text-left text-xs border-collapse">
+          <thead class="bg-slate-50/95 border-b border-slate-200/80 text-[10px] font-black text-slate-500 uppercase tracking-widest">
             <tr>
-              <th class="px-6 py-4">Codice PNR</th>
-              <th class="px-6 py-4">Passeggero</th>
-              <th class="px-6 py-4">Documento Identità</th>
-              <th class="px-6 py-4">Volo Assegnato</th>
-              <th class="px-6 py-4">Sedile</th>
-              <th class="px-6 py-4">Importo Pagato</th>
-              <th class="px-6 py-4">Data Emissione</th>
-              <th class="px-6 py-4">Stato Titolo</th>
+              <th class="px-6 py-4.5">Codice PNR</th>
+              <th class="px-6 py-4.5">Passeggero</th>
+              <th class="px-6 py-4.5">Volo Assegnato</th>
+              <th class="px-6 py-4.5 text-center">Sedile</th>
+              <th class="px-6 py-4.5">Stato Check-in</th>
+              <th class="px-6 py-4.5">Servizi Extra</th>
+              <th class="px-6 py-4.5">Importo</th>
+              <th class="px-6 py-4.5">Data Emissione</th>
             </tr>
           </thead>
           <tbody id="table-passeggeri-body" class="divide-y divide-slate-100 font-medium text-slate-700">
             <tr>
-              <td colspan="8" class="px-6 py-16 text-center">
-                <div class="max-w-xs mx-auto text-center">
-                  <div class="w-12 h-12 mx-auto rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400 text-xl font-bold mb-3">
+              <td colspan="8" class="px-6 py-20 text-center">
+                <div class="max-w-sm mx-auto flex flex-col items-center">
+                  <div class="w-14 h-14 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center text-2xl mb-3 shadow-inner">
                     📋
                   </div>
-                  <p class="text-sm font-extrabold text-slate-800">Caricamento manifest passeggeri...</p>
-                  <p class="text-xs text-slate-400 mt-1">Recupero dell'elenco dei biglietti emessi.</p>
+                  <h4 class="text-sm font-extrabold text-slate-800">Caricamento manifest passeggeri...</h4>
+                  <p class="text-xs text-slate-400 mt-1">Recupero dell'elenco dei biglietti emessi dal sistema centrale.</p>
                 </div>
               </td>
             </tr>
@@ -264,18 +303,23 @@
   </main>
 
   <!-- ========================================================================= -->
-  <!-- 4. MODAL ENTERPRISE: AGGIUNGI NUOVO VOLO                                  -->
+  <!-- 4. MODALE REGISTRAZIONE VOLO (CON SUPPORTO CHARTER PRIVATO)              -->
   <!-- ========================================================================= -->
-  <div id="modal-nuovo-volo" class="hidden fixed inset-0 bg-forest-950/60 backdrop-blur-md z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl max-w-lg w-full p-8 shadow-2xl border border-slate-200/80 animate-in fade-in zoom-in duration-150">
+  <div id="modal-nuovo-volo" class="hidden fixed inset-0 bg-forest-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-200/90 transform transition-all duration-200">
       
-      <!-- Header Modale -->
+      <!-- Intestazione Modale -->
       <div class="flex items-center justify-between border-b border-slate-100 pb-4 mb-6">
-        <div>
-          <span class="px-2.5 py-0.5 rounded-md bg-lime-100 text-forest-900 text-[10px] font-black uppercase tracking-wider">
-            Nuova Tratta
-          </span>
-          <h3 class="text-lg font-extrabold text-slate-900 mt-1">Registra Volo nel Tabellone</h3>
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-xl bg-lime-100 text-forest-900 flex items-center justify-center font-bold text-base">
+            ✈️
+          </div>
+          <div>
+            <span class="px-2 py-0.5 rounded bg-lime-100 text-forest-900 text-[9px] font-black uppercase tracking-wider">
+              Schedulazione Tratta
+            </span>
+            <h3 class="text-base font-extrabold text-slate-900 mt-0.5">Registra Nuovo Volo nel Tabellone</h3>
+          </div>
         </div>
         <button id="btn-close-modal" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 font-bold flex items-center justify-center transition">
           ✕
@@ -299,13 +343,13 @@
             />
           </div>
           <div>
-            <label class="block text-[10px] font-extrabold uppercase tracking-wider text-slate-500 mb-1.5">Capienza Posti</label>
+            <label class="block text-[10px] font-extrabold uppercase tracking-wider text-slate-500 mb-1.5">Capienza Totale Posti</label>
             <input 
               type="number" 
               id="nuovo-posti" 
               required 
               value="180" 
-              min="10" 
+              min="1" 
               max="500" 
               class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold focus:outline-none focus:ring-2 focus:ring-lime-500 focus:bg-white transition"
             />
@@ -370,7 +414,19 @@
           />
         </div>
 
-        <!-- Bottoni Azione -->
+        <!-- Checkbox Volo Privato Dedicato / Charter -->
+        <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-xl flex items-center space-x-3">
+          <input 
+            type="checkbox" 
+            id="nuovo-charter" 
+            class="w-4 h-4 text-lime-600 rounded border-slate-300 focus:ring-lime-500 cursor-pointer"
+          />
+          <label for="nuovo-charter" class="text-xs font-bold text-slate-800 cursor-pointer select-none">
+            Volo Privato Dedicato (Charter di Necessità Regionale)
+          </label>
+        </div>
+
+        <!-- Bottoni Azione Modale -->
         <div class="pt-4 flex justify-end space-x-3 border-t border-slate-100 mt-6">
           <button 
             type="button" 
@@ -393,11 +449,15 @@
   </div>
 
   <!-- ========================================================================= -->
-  <!-- 5. FOOTER RISERVATO                                                       -->
+  <!-- 5. FOOTER ISTITUZIONALE RISERVATO                                         -->
   <!-- ========================================================================= -->
   <footer class="bg-forest-950 text-slate-400 border-t border-white/10 py-6 mt-auto text-center text-xs">
-    <div class="max-w-7xl mx-auto px-4">
-      <p>© 2026 LombardiAIR S.p.A. - Controllo di Gestione Flotta & Tratte Regionali. Riservato al personale autorizzato.</p>
+    <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="flex items-center space-x-2 text-[11px]">
+        <div class="w-2 h-2 rounded-full bg-lime-400"></div>
+        <span>LombardiAIR S.p.A. • Controllo Operativo di Gestione Flotta Regionale</span>
+      </div>
+      <p class="text-[11px] text-slate-500">Accesso limitato al personale autorizzato ENAC / B2B.</p>
     </div>
   </footer>
 

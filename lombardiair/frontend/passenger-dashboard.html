@@ -37,7 +37,6 @@
           boxShadow: {
             'card-soft': '0 4px 20px -2px rgba(11, 37, 25, 0.05), 0 2px 6px -1px rgba(0, 0, 0, 0.02)',
             'cta-glow': '0 8px 24px -4px rgba(132, 204, 22, 0.45)',
-            'fids-glow': '0 0 25px rgba(132, 204, 22, 0.15)',
           }
         }
       }
@@ -108,7 +107,7 @@
   </header>
 
   <!-- ========================================================================= -->
-  <!-- 2. WELCOME HERO & METRICHE FEDELTÀ                                         -->
+  <!-- 2. WELCOME HERO & PROGRAMMA "FLYING LOMB"                                 -->
   <!-- ========================================================================= -->
   <section class="bg-forest-950 text-white pt-10 pb-16 px-4 sm:px-6 lg:px-8 border-b border-white/5 relative overflow-hidden">
     <div class="absolute -right-20 -top-20 w-80 h-80 bg-lime-500/10 rounded-full filter blur-3xl pointer-events-none"></div>
@@ -117,32 +116,32 @@
       <div>
         <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-white/10 border border-white/15 text-lime-400 text-[10px] font-black uppercase tracking-widest mb-3">
           <span class="w-1.5 h-1.5 rounded-full bg-lime-400 animate-pulse"></span>
-          <span>Programma Fedeltà Regionale</span>
+          <span>Programma Fedeltà Regionale "Flying Lomb"</span>
         </div>
         <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight" id="welcome-title">
           Bentornato a bordo
         </h1>
         <p class="text-xs sm:text-sm text-slate-300 mt-1 max-w-xl font-normal">
-          Gestisci i tuoi titoli di viaggio olografici 3D, aggiungi servizi di bordo prioritari e monitora le partenze regionali in tempo reale.
+          Gestisci i tuoi titoli di viaggio, esegui il check-in online per sbloccare la carta d'imbarco olografica 3D e accumula punti per salire di Tier.
         </p>
       </div>
 
-      <!-- Badge Status Club -->
+      <!-- Container Dinamico Loyalty Tier Flying Lomb -->
       <div class="flex items-center space-x-4 bg-white/5 border border-white/10 backdrop-blur-md p-4 rounded-2xl">
-        <div class="w-12 h-12 rounded-xl bg-lime-400 text-forest-950 flex items-center justify-center font-black text-xl shadow-md shadow-lime-500/20">
+        <div class="w-12 h-12 rounded-2xl bg-forest-800 text-lime-400 border border-lime-500/40 flex items-center justify-center font-black text-xl shadow-md">
           ★
         </div>
         <div>
-          <span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">Status Frequent Flyer</span>
-          <span class="text-base font-black text-white">LombardiAIR Silver</span>
-          <span class="text-[11px] text-lime-400 block font-mono font-semibold">1.450 Miglia Regionali</span>
+          <span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">Programma Flying Lomb</span>
+          <span class="text-base font-black text-white">Caricamento Livello...</span>
+          <span class="text-[11px] text-lime-400 block font-mono font-semibold">0 Miglia • 0 XP</span>
         </div>
       </div>
     </div>
   </section>
 
   <!-- ========================================================================= -->
-  <!-- 3. SEGMENTED TABS SWITCHER                                                -->
+  <!-- 3. CONTENUTO PRINCIPALE & TAB SWITCHER                                    -->
   <!-- ========================================================================= -->
   <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-8 flex-grow w-full pb-16">
     
@@ -166,23 +165,18 @@
     <div id="passenger-alert" class="hidden mb-6 p-4 rounded-2xl text-xs font-bold leading-relaxed border transition-all duration-300"></div>
 
     <!-- ======================================================================= -->
-    <!-- SEZIONE 1: I MIEI VOLI & BIGLIETTI 3D                                  -->
+    <!-- SEZIONE 1: I MIEI VOLI & CHECK-IN GUARD                                 -->
     <!-- ======================================================================= -->
     <section id="section-voli" class="space-y-6">
       <div class="flex items-center justify-between">
         <div>
           <h2 class="text-xl font-black text-slate-900 tracking-tight">Le Tue Prenotazioni Attive</h2>
-          <p class="text-xs text-slate-500 font-medium">Visualizza il titolo digitale, scarica il PDF o ruota la carta d'imbarco olografica 3D.</p>
+          <p class="text-xs text-slate-500 font-medium">Esegui il check-in online per sbloccare la carta d'imbarco olografica 3D e visualizzare il gate.</p>
         </div>
-        <button onclick="caricaPrenotazioniUtente()" class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition flex items-center space-x-1.5">
-          <span>🔄</span>
-          <span>Aggiorna</span>
-        </button>
       </div>
 
-      <!-- Container Cards Biglietti -->
+      <!-- Container Cards Biglietti Dinamiche da Supabase -->
       <div id="lista-biglietti-container" class="grid grid-cols-1 gap-4">
-        <!-- Skeleton Loading Iniziale -->
         <div class="p-12 text-center bg-white rounded-3xl border border-slate-200/80 animate-pulse">
           <div class="w-10 h-10 mx-auto rounded-full bg-slate-100 flex items-center justify-center text-slate-400 mb-3">
             ✈️
@@ -193,26 +187,26 @@
     </section>
 
     <!-- ======================================================================= -->
-    <!-- SEZIONE 2: TABELLONE VOLI "STILE AEROPORTO" (FIDS MONITOR)              -->
+    <!-- SEZIONE 2: TABELLONE FIDS "STILE AEROPORTO"                              -->
     <!-- ======================================================================= -->
     <section id="section-fids" class="hidden space-y-4">
       
-      <!-- FIDS Monitor Frame (Airport departures Display) -->
+      <!-- FIDS Monitor Frame -->
       <div class="bg-black text-white rounded-3xl p-6 sm:p-8 border-4 border-slate-900 shadow-2xl shadow-forest-950/40 relative overflow-hidden font-mono">
         
-        <!-- CRT Monitor Lines Overlay -->
+        <!-- CRT Lines Effect -->
         <div class="absolute inset-0 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%)] bg-[length:100%_4px] pointer-events-none opacity-40"></div>
 
         <!-- FIDS Header Bar -->
         <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-6 mb-6 border-b-2 border-slate-800 gap-4 relative z-10">
           <div class="flex items-center space-x-3">
-            <div class="w-4 h-4 rounded-full bg-lime-400 animate-ping"></div>
+            <div class="w-3.5 h-3.5 rounded-full bg-lime-400 animate-ping"></div>
             <div>
               <span class="text-amber-400 text-sm font-black tracking-widest uppercase block">
                 PARTENZE REGIONALI • DEPARTURES
               </span>
               <span class="text-[10px] text-slate-400 tracking-wider">
-                HUB LOMBARDIA (LINATE • MALPENSA • MONZA HUB)
+                RADAR HUB LOMBARDIA (LIN • MXP • MNZ • BGY)
               </span>
             </div>
           </div>
@@ -237,7 +231,7 @@
               </tr>
             </thead>
             <tbody id="fids-table-body" class="divide-y divide-slate-900 font-bold text-slate-100 tracking-wide text-xs">
-              <!-- Righe dinamiche popolate da JS -->
+              <!-- Righe dinamiche popolate in tempo reale da Supabase -->
             </tbody>
           </table>
         </div>
@@ -246,10 +240,10 @@
         <div class="mt-6 pt-4 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between text-[10px] text-slate-400 tracking-wider relative z-10">
           <span class="flex items-center space-x-2">
             <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
-            <span>TUTTI I VOLI RISPETTANO GLI STANDARD DI PUNTUALITÀ REGIONALE</span>
+            <span>DATI SINCRONIZZATI CON IL DATABASE CENTRALE SUPABASE</span>
           </span>
           <span class="text-amber-400/80 mt-2 sm:mt-0 font-semibold">
-            AGGIORNAMENTO AUTOMATICO OGNI 30 SECONDI
+            ACCESSO RISERVATO PASSEGGERI
           </span>
         </div>
 
@@ -257,12 +251,12 @@
     </section>
 
     <!-- ======================================================================= -->
-    <!-- SEZIONE 3: SERVIZI ACCESSORI & EXTRA (BAGGAGE & FAST TRACK)             -->
+    <!-- SEZIONE 3: SERVIZI ACCESSORI & EXTRA                                     -->
     <!-- ======================================================================= -->
     <section id="section-extra" class="hidden space-y-6">
       <div>
-        <h2 class="text-xl font-black text-slate-900 tracking-tight">Servizi Extra di Viaggio</h2>
-        <p class="text-xs text-slate-500 font-medium">Personalizza la tua esperienza di volo con imbarchi prioritari e franchigia bagagli aumentata.</p>
+        <h2 class="text-xl font-black text-slate-900 tracking-tight">Servizi Accessori di Viaggio</h2>
+        <p class="text-xs text-slate-500 font-medium">I servizi selezionati vengono salvati direttamente sulla tua prenotazione attiva.</p>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -278,10 +272,10 @@
               <span class="text-base font-black text-forest-950 font-mono">€ 19.00</span>
             </div>
             <p class="text-xs text-slate-500 leading-relaxed font-medium mb-6">
-              Aggiungi una valigia da stiva con consegna express prioritaria al nastro bagagli dell'hub di Monza o Linate.
+              Aggiungi una valigia da stiva con consegna express prioritaria al nastro bagagli dell'aviosuperficie di arrivo.
             </p>
           </div>
-          <button onclick="aggiungiServizioExtra('Bagaglio da Stiva 23kg', 19)" class="w-full py-3 rounded-2xl bg-slate-900 hover:bg-forest-900 text-white font-bold text-xs uppercase tracking-wider transition">
+          <button onclick="aggiungiServizioExtra('Bagaglio da Stiva 23kg', 19)" class="w-full py-3 rounded-2xl bg-slate-900 hover:bg-forest-900 text-white font-bold text-xs uppercase tracking-wider transition active:scale-95">
             + Aggiungi al Volo
           </button>
         </div>
@@ -300,7 +294,7 @@
               Corsia preferenziale ai controlli di sicurezza. Raggiungi il gate d'imbarco in meno di 3 minuti senza code.
             </p>
           </div>
-          <button onclick="aggiungiServizioExtra('Fast Track Biometrico', 9)" class="w-full py-3 rounded-2xl bg-lime-500 hover:bg-lime-400 text-forest-950 font-black text-xs uppercase tracking-wider shadow-cta-glow transition">
+          <button onclick="aggiungiServizioExtra('Fast Track Biometrico', 9)" class="w-full py-3 rounded-2xl bg-lime-500 hover:bg-lime-400 text-forest-950 font-black text-xs uppercase tracking-wider shadow-cta-glow transition active:scale-95">
             + Aggiungi Fast Track
           </button>
         </div>
@@ -316,10 +310,10 @@
               <span class="text-base font-black text-forest-950 font-mono">€ 25.00</span>
             </div>
             <p class="text-xs text-slate-500 leading-relaxed font-medium mb-6">
-              Wi-Fi satellitare ad alta velocità, open bar, caffetteria premium e sale meeting riservate prima della partenza.
+              Wi-Fi satellitare, open bar, caffetteria premium e sale meeting riservate prima della partenza.
             </p>
           </div>
-          <button onclick="aggiungiServizioExtra('Accesso Lounge VIP Monza Hub', 25)" class="w-full py-3 rounded-2xl bg-slate-900 hover:bg-forest-900 text-white font-bold text-xs uppercase tracking-wider transition">
+          <button onclick="aggiungiServizioExtra('Accesso Lounge VIP Monza Hub', 25)" class="w-full py-3 rounded-2xl bg-slate-900 hover:bg-forest-900 text-white font-bold text-xs uppercase tracking-wider transition active:scale-95">
             + Aggiungi Lounge
           </button>
         </div>
