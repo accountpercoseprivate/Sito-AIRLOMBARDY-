@@ -14,15 +14,18 @@ const alertBox = document.getElementById('passenger-alert');
 
 // Riferimenti DOM Tab Navigation
 const tabBtnVoli = document.getElementById('tab-btn-voli');
+const tabBtnBenefits = document.getElementById('tab-btn-benefits');
 const tabBtnFids = document.getElementById('tab-btn-fids');
 const tabBtnExtra = document.getElementById('tab-btn-extra');
 
 const sectionVoli = document.getElementById('section-voli');
+const sectionBenefits = document.getElementById('section-benefits');
 const sectionFids = document.getElementById('section-fids');
 const sectionExtra = document.getElementById('section-extra');
 
 // Contenitori Dinamici
 const listaBigliettiContainer = document.getElementById('lista-biglietti-container');
+const listaRiscattiContainer = document.getElementById('lista-riscatti-container');
 const fidsTableBody = document.getElementById('fids-table-body');
 const fidsClock = document.getElementById('fids-clock');
 
@@ -39,6 +42,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   startFidsClock();
   await fetchUserData();
   await caricaTabelloneFIDS();
+  await caricaStoricoRiscatti();
 });
 
 if (btnLogout) {
@@ -134,6 +138,12 @@ function renderLoyaltyCard(p) {
       </div>
     `;
   }
+
+  // Aggiorna anche il contatore nella sezione Benefits
+  const storeMilesBadge = document.getElementById('store-user-miles');
+  if (storeMilesBadge) {
+    storeMilesBadge.textContent = `${p.miles_balance || 0} Miglia Disponibili`;
+  }
 }
 
 // =============================================================================
@@ -162,7 +172,6 @@ async function fetchUserBookings() {
 
     userBookings = data || [];
 
-    // Stato vuoto elegante se l'utente non ha biglietti
     if (userBookings.length === 0) {
       listaBigliettiContainer.innerHTML = `
         <div class="p-12 text-center bg-white rounded-3xl border border-slate-200/80 shadow-sm">
@@ -186,7 +195,6 @@ async function fetchUserBookings() {
       const dataStr = dPartenza.toLocaleDateString('it-IT', { day: '2-digit', month: 'short', year: 'numeric' });
       const isCheckedIn = b.check_in_status === true;
 
-      // Elenco Servizi Extra attivi
       const extraList = [];
       if (b.extra_baggage) extraList.push('🧳 Bagaglio 23kg');
       if (b.fast_track) extraList.push('⚡ Fast Track');
@@ -195,7 +203,6 @@ async function fetchUserBookings() {
       return `
         <div class="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/90 shadow-card-soft hover:shadow-lg transition-all flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
           
-          <!-- Sezione Tratta e Orari -->
           <div class="flex items-start sm:items-center space-x-4">
             <div class="w-16 h-16 rounded-2xl bg-forest-900 text-lime-400 flex flex-col items-center justify-center flex-shrink-0 shadow-sm">
               <span class="text-[9px] font-black tracking-widest uppercase opacity-70">VOLO</span>
@@ -237,7 +244,6 @@ async function fetchUserBookings() {
             </div>
           </div>
 
-          <!-- Sezione Sedile, PNR & Azioni -->
           <div class="flex items-center space-x-4 border-t lg:border-t-0 pt-4 lg:pt-0 w-full lg:w-auto justify-between lg:justify-end">
             <div class="text-left lg:text-right">
               <span class="text-[10px] font-extrabold uppercase text-slate-400 block">Sedile / PNR</span>
@@ -277,7 +283,7 @@ async function fetchUserBookings() {
 }
 
 // =============================================================================
-// 3. ESECUZIONE CHECK-IN REALE CON RPC (+5 XP e +50 Miglia)
+// 3. CHECK-IN ONLINE REALE (+5 XP e +50 Miglia)
 // =============================================================================
 
 window.eseguiCheckIn = async function(codicePnr) {
@@ -289,8 +295,6 @@ window.eseguiCheckIn = async function(codicePnr) {
     if (error) throw error;
 
     showAlert(`✓ Check-in completato per il biglietto ${codicePnr}! Accredito: +5 XP e +50 Miglia.`);
-    
-    // Ricarica i dati del profilo e la lista biglietti
     await fetchUserData();
 
   } catch (err) {
@@ -299,7 +303,101 @@ window.eseguiCheckIn = async function(codicePnr) {
 };
 
 // =============================================================================
-// 4. TABELLONE FIDS REALE (DATI DA SUPABASE)
+// 4. STORE RISCATTO MIGLIA & BENEFIT "FLYING LOMB"
+// =============================================================================
+
+window.richiediRiscatto = async function(tipoPremio, costoMiglia) {
+  if (!currentProfile) return;
+
+  if ((currentProfile.miles_balance || 0) < costoMiglia) {
+    showAlert(`Saldo insufficiente: ti mancano ${costoMiglia - (currentProfile.miles_balance || 0)} miglia per richiedere questo premio.`, true);
+    return;
+  }
+
+  if (!confirm(`Confermi la richiesta di riscatto per "${tipoPremio}" al costo di ${costoMiglia} Miglia?`)) {
+    return;
+  }
+
+  try {
+    const sb = getSupabase();
+    showAlert(`Elaborazione riscatto "${tipoPremio}" in corso...`);
+
+    const { data, error } = await sb.rpc('richiedi_riscatto_premio', {
+      p_tipo_premio: tipoPremio,
+      p_costo_miglia: costoMiglia
+    });
+
+    if (error) throw error;
+
+    showAlert(`✓ Richiesta di riscatto per "${tipoPremio}" inviata con successo all'amministrazione! Miglia scalate: -${costoMiglia}.`);
+    
+    // Ricarica profilo e tabella richieste
+    await fetchUserData();
+    await caricaStoricoRiscatti();
+
+  } catch (err) {
+    showAlert(`Errore nel riscatto del premio: ${err.message}`, true);
+  }
+};
+
+/**
+ * Carica lo storico dei premi riscattati dall'utente
+ */
+async function caricaStoricoRiscatti() {
+  if (!listaRiscattiContainer) return;
+
+  try {
+    const sb = getSupabase();
+    const { data: riscatti, error } = await sb
+      .from('richieste_premi')
+      .select('*')
+      .eq('utente_id', currentUser.id)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    if (!riscatti || riscatti.length === 0) {
+      listaRiscattiContainer.innerHTML = `
+        <div class="p-6 text-center text-slate-400 text-xs font-semibold">
+          Nessuna richiesta di riscatto premio inviata finora.
+        </div>
+      `;
+      return;
+    }
+
+    listaRiscattiContainer.innerHTML = riscatti.map(r => {
+      const dataStr = new Date(r.created_at).toLocaleDateString('it-IT');
+      let statusBadge = '';
+
+      if (r.stato === 'in_attesa') {
+        statusBadge = '<span class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase bg-amber-100 text-amber-900 border border-amber-300">⏳ In Attesa Approvazione Admin</span>';
+      } else if (r.stato === 'approvato') {
+        statusBadge = '<span class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase bg-emerald-100 text-emerald-800 border border-emerald-300">✓ Approvato & Convalidato</span>';
+      } else {
+        statusBadge = '<span class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase bg-rose-100 text-rose-800 border border-rose-200">✕ Rifiutato (Miglia Rimborsate)</span>';
+      }
+
+      return `
+        <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+          <div>
+            <div class="font-extrabold text-slate-900 text-sm">${r.tipo_premio}</div>
+            <div class="text-slate-500 text-[11px] mt-0.5">
+              Data: <b>${dataStr}</b> • Costo: <b class="text-forest-900 font-mono">-${r.costo_miglia} Miglia</b>
+              ${r.note_admin ? `<span class="block text-slate-600 mt-1 italic">Nota Admin: ${r.note_admin}</span>` : ''}
+            </div>
+          </div>
+          <div>${statusBadge}</div>
+        </div>
+      `;
+    }).join('');
+
+  } catch (err) {
+    console.warn('Errore storico riscatti:', err);
+  }
+}
+
+// =============================================================================
+// 5. TABELLONE FIDS REALE (FETCH DA DATABASE SUPABASE)
 // =============================================================================
 
 window.caricaTabelloneFIDS = async function() {
@@ -372,7 +470,7 @@ window.caricaTabelloneFIDS = async function() {
 };
 
 // =============================================================================
-// 5. AGGIUNTA SERVIZI EXTRA SU SUPABASE
+// 6. ACQUISTO SERVIZI EXTRA SU SUPABASE
 // =============================================================================
 
 window.aggiungiServizioExtra = async function(tipoServizio, prezzo) {
@@ -381,7 +479,6 @@ window.aggiungiServizioExtra = async function(tipoServizio, prezzo) {
     return;
   }
 
-  // Seleziona la prima prenotazione attiva
   const pnrAttivo = userBookings[0].codice_prenotazione;
 
   try {
@@ -408,7 +505,7 @@ window.aggiungiServizioExtra = async function(tipoServizio, prezzo) {
 };
 
 // =============================================================================
-// UTILITY: OROLOGIO, ALERT & TABS
+// UTILITY: OROLOGIO, ALERT & TABS SWITCHER
 // =============================================================================
 
 function startFidsClock() {
@@ -434,10 +531,10 @@ function showAlert(message, isError = false) {
 }
 
 function resetTabs() {
-  [tabBtnVoli, tabBtnFids, tabBtnExtra].forEach(btn => {
+  [tabBtnVoli, tabBtnBenefits, tabBtnFids, tabBtnExtra].forEach(btn => {
     if (btn) btn.className = 'px-5 py-2.5 rounded-xl text-slate-600 hover:text-slate-900 text-xs font-bold transition-all flex items-center space-x-2';
   });
-  [sectionVoli, sectionFids, sectionExtra].forEach(sec => sec?.classList.add('hidden'));
+  [sectionVoli, sectionBenefits, sectionFids, sectionExtra].forEach(sec => sec?.classList.add('hidden'));
 }
 
 if (tabBtnVoli) {
@@ -445,6 +542,15 @@ if (tabBtnVoli) {
     resetTabs();
     tabBtnVoli.className = 'px-5 py-2.5 rounded-xl bg-forest-900 text-white text-xs font-extrabold shadow-sm transition-all flex items-center space-x-2';
     sectionVoli?.classList.remove('hidden');
+  });
+}
+
+if (tabBtnBenefits) {
+  tabBtnBenefits.addEventListener('click', () => {
+    resetTabs();
+    tabBtnBenefits.className = 'px-5 py-2.5 rounded-xl bg-forest-900 text-white text-xs font-extrabold shadow-sm transition-all flex items-center space-x-2';
+    sectionBenefits?.classList.remove('hidden');
+    caricaStoricoRiscatti();
   });
 }
 

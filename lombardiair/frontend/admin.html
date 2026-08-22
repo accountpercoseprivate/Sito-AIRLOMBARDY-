@@ -125,7 +125,7 @@
   <!-- ========================================================================= -->
   <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow w-full">
     
-    <!-- Box Notifiche Dinamiche Feedback -->
+    <!-- Box Notifiche Feedback -->
     <div id="admin-alert" class="hidden mb-6 p-4 rounded-2xl text-xs font-bold leading-relaxed border shadow-sm transition-all duration-300"></div>
 
     <!-- ======================================================================= -->
@@ -208,23 +208,31 @@
     </div>
 
     <!-- ======================================================================= -->
-    <!-- 3. ACTION BAR & SEGMENTED SWITCHER                                       -->
+    <!-- 3. ACTION BAR & SWITCHER A 4 TAB                                         -->
     <!-- ======================================================================= -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
       
-      <!-- Segmented Switcher -->
-      <div class="inline-flex p-1.5 rounded-2xl bg-slate-200/80 border border-slate-300/70 shadow-inner">
-        <button id="tab-voli" class="px-5 py-2.5 rounded-xl bg-forest-900 text-white text-xs font-extrabold shadow-sm transition-all flex items-center space-x-2">
+      <!-- Segmented Switcher a 4 Tab -->
+      <div class="inline-flex p-1.5 rounded-2xl bg-slate-200/80 border border-slate-300/70 shadow-inner flex-wrap gap-1">
+        <button id="tab-voli" class="px-4 py-2.5 rounded-xl bg-forest-900 text-white text-xs font-extrabold shadow-sm transition-all flex items-center space-x-2">
           <span>✈️</span>
-          <span>Gestione Flotta & Tratte</span>
+          <span>Flotta & Tariffe</span>
         </button>
-        <button id="tab-passeggeri" class="px-5 py-2.5 rounded-xl text-slate-600 hover:text-slate-900 text-xs font-bold transition-all flex items-center space-x-2">
+        <button id="tab-passeggeri" class="px-4 py-2.5 rounded-xl text-slate-600 hover:text-slate-900 text-xs font-bold transition-all flex items-center space-x-2">
           <span>📋</span>
-          <span>Manifest Passeggeri & Check-in</span>
+          <span>Manifest & Check-in</span>
+        </button>
+        <button id="tab-premi" class="px-4 py-2.5 rounded-xl text-slate-600 hover:text-slate-900 text-xs font-bold transition-all flex items-center space-x-2">
+          <span>🎁</span>
+          <span>Approvazione Premi</span>
+        </button>
+        <button id="tab-utenti" class="px-4 py-2.5 rounded-xl text-slate-600 hover:text-slate-900 text-xs font-bold transition-all flex items-center space-x-2">
+          <span>👥</span>
+          <span>Anagrafica & Punti</span>
         </button>
       </div>
 
-      <!-- Pulsante Schedula Volo -->
+      <!-- Pulsante Aggiungi Volo -->
       <button id="btn-open-modal-volo" class="px-5 py-3 rounded-2xl bg-lime-500 hover:bg-lime-400 active:bg-lime-600 text-forest-950 font-extrabold text-xs uppercase tracking-wider shadow-cta-glow hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 flex items-center justify-center space-x-2">
         <span class="text-base font-black leading-none">+</span>
         <span>Aggiungi Nuovo Volo</span>
@@ -232,7 +240,7 @@
     </div>
 
     <!-- ======================================================================= -->
-    <!-- SEZIONE 1: TABELLA FLOTTA VOLI                                          -->
+    <!-- SEZIONE 1: TABELLA FLOTTA VOLI & MODIFICA TARIFFE                       -->
     <!-- ======================================================================= -->
     <div id="section-voli" class="bg-white rounded-3xl border border-slate-200/90 shadow-card-soft overflow-hidden">
       <div class="overflow-x-auto">
@@ -250,14 +258,8 @@
           </thead>
           <tbody id="table-voli-body" class="divide-y divide-slate-100 font-medium text-slate-700">
             <tr>
-              <td colspan="7" class="px-6 py-20 text-center">
-                <div class="max-w-sm mx-auto flex flex-col items-center">
-                  <div class="w-14 h-14 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center text-2xl mb-3 shadow-inner">
-                    ✈️
-                  </div>
-                  <h4 class="text-sm font-extrabold text-slate-800">Sincronizzazione orari in corso...</h4>
-                  <p class="text-xs text-slate-400 mt-1">Connessione al database Supabase per il caricamento della flotta.</p>
-                </div>
+              <td colspan="7" class="px-6 py-20 text-center text-slate-400">
+                Sincronizzazione orari con il database Supabase...
               </td>
             </tr>
           </tbody>
@@ -266,7 +268,7 @@
     </div>
 
     <!-- ======================================================================= -->
-    <!-- SEZIONE 2: TABELLA MANIFEST PASSEGGERI (CON CHECK-IN E SERVIZI EXTRA)   -->
+    <!-- SEZIONE 2: TABELLA MANIFEST PASSEGGERI & CHECK-IN                       -->
     <!-- ======================================================================= -->
     <div id="section-passeggeri" class="hidden bg-white rounded-3xl border border-slate-200/90 shadow-card-soft overflow-hidden">
       <div class="overflow-x-auto">
@@ -285,14 +287,83 @@
           </thead>
           <tbody id="table-passeggeri-body" class="divide-y divide-slate-100 font-medium text-slate-700">
             <tr>
-              <td colspan="8" class="px-6 py-20 text-center">
-                <div class="max-w-sm mx-auto flex flex-col items-center">
-                  <div class="w-14 h-14 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center text-2xl mb-3 shadow-inner">
-                    📋
-                  </div>
-                  <h4 class="text-sm font-extrabold text-slate-800">Caricamento manifest passeggeri...</h4>
-                  <p class="text-xs text-slate-400 mt-1">Recupero dell'elenco dei biglietti emessi dal sistema centrale.</p>
-                </div>
+              <td colspan="8" class="px-6 py-20 text-center text-slate-400">
+                Caricamento manifest passeggeri...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ======================================================================= -->
+    <!-- SEZIONE 3: TABELLA APPROVAZIONE RISCATTI PREMI (STORE MIGLIA)           -->
+    <!-- ======================================================================= -->
+    <div id="section-premi" class="hidden bg-white rounded-3xl border border-slate-200/90 shadow-card-soft overflow-hidden">
+      <div class="p-5 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+        <div>
+          <h3 class="text-sm font-extrabold text-slate-900">Centro Approvazione Riscatti Premi "Flying Lomb"</h3>
+          <p class="text-xs text-slate-500">Approva o rifiuta le conversioni miglia richieste dai passeggeri (il rifiuto rimborsa le miglia automaticamente).</p>
+        </div>
+        <button onclick="loadPremiTable()" class="px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-bold hover:bg-slate-50 transition">
+          🔄 Aggiorna
+        </button>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs border-collapse">
+          <thead class="bg-slate-50/95 border-b border-slate-200/80 text-[10px] font-black text-slate-500 uppercase tracking-widest">
+            <tr>
+              <th class="px-6 py-4.5">Data Richiesta</th>
+              <th class="px-6 py-4.5">Cittadino Richiedente</th>
+              <th class="px-6 py-4.5">Premio Richiesto</th>
+              <th class="px-6 py-4.5 text-center">Miglia Scalate</th>
+              <th class="px-6 py-4.5">Stato Attuale</th>
+              <th class="px-6 py-4.5 text-right">Decisione Admin</th>
+            </tr>
+          </thead>
+          <tbody id="table-premi-body" class="divide-y divide-slate-100 font-medium text-slate-700">
+            <tr>
+              <td colspan="6" class="px-6 py-20 text-center text-slate-400">
+                Caricamento richieste premi...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ======================================================================= -->
+    <!-- SEZIONE 4: ANAGRAFICA PASSEGGERI & GESTIONE LIVELLI/PUNTI               -->
+    <!-- ======================================================================= -->
+    <div id="section-utenti" class="hidden bg-white rounded-3xl border border-slate-200/90 shadow-card-soft overflow-hidden">
+      <div class="p-5 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+        <div>
+          <h3 class="text-sm font-extrabold text-slate-900">Anagrafica Cittadini & Livelli Fedeltà</h3>
+          <p class="text-xs text-slate-500">Monitora i livelli Flying Lomb e accredita/modifica manualmente XP o Miglia per bonus speciali.</p>
+        </div>
+        <button onclick="loadUtentiTable()" class="px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-bold hover:bg-slate-50 transition">
+          🔄 Aggiorna
+        </button>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs border-collapse">
+          <thead class="bg-slate-50/95 border-b border-slate-200/80 text-[10px] font-black text-slate-500 uppercase tracking-widest">
+            <tr>
+              <th class="px-6 py-4.5">Cittadino / Email</th>
+              <th class="px-6 py-4.5">Codice Fiscale</th>
+              <th class="px-6 py-4.5">Tier "Flying Lomb"</th>
+              <th class="px-6 py-4.5 text-center">Saldo XP</th>
+              <th class="px-6 py-4.5 text-center">Saldo Miglia</th>
+              <th class="px-6 py-4.5">Ruolo Sistema</th>
+              <th class="px-6 py-4.5 text-right">Rettifica Punti</th>
+            </tr>
+          </thead>
+          <tbody id="table-utenti-body" class="divide-y divide-slate-100 font-medium text-slate-700">
+            <tr>
+              <td colspan="7" class="px-6 py-20 text-center text-slate-400">
+                Caricamento anagrafica passeggeri...
               </td>
             </tr>
           </tbody>
@@ -303,12 +374,11 @@
   </main>
 
   <!-- ========================================================================= -->
-  <!-- 4. MODALE REGISTRAZIONE VOLO (CON SUPPORTO CHARTER PRIVATO)              -->
+  <!-- 4. MODALE 1: AGGIUNGI NUOVO VOLO / CHARTER                                -->
   <!-- ========================================================================= -->
   <div id="modal-nuovo-volo" class="hidden fixed inset-0 bg-forest-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-200/90 transform transition-all duration-200">
       
-      <!-- Intestazione Modale -->
       <div class="flex items-center justify-between border-b border-slate-100 pb-4 mb-6">
         <div class="flex items-center space-x-3">
           <div class="w-10 h-10 rounded-xl bg-lime-100 text-forest-900 flex items-center justify-center font-bold text-base">
@@ -326,7 +396,6 @@
         </button>
       </div>
 
-      <!-- Form Dati Volo -->
       <form id="form-create-flight" class="space-y-4">
         
         <div class="grid grid-cols-2 gap-4">
@@ -414,7 +483,6 @@
           />
         </div>
 
-        <!-- Checkbox Volo Privato Dedicato / Charter -->
         <div class="p-3.5 bg-slate-50 border border-slate-200 rounded-xl flex items-center space-x-3">
           <input 
             type="checkbox" 
@@ -426,7 +494,6 @@
           </label>
         </div>
 
-        <!-- Bottoni Azione Modale -->
         <div class="pt-4 flex justify-end space-x-3 border-t border-slate-100 mt-6">
           <button 
             type="button" 
@@ -449,15 +516,140 @@
   </div>
 
   <!-- ========================================================================= -->
-  <!-- 5. FOOTER ISTITUZIONALE RISERVATO                                         -->
+  <!-- 5. MODALE 2: MODIFICA RAPIDA PREZZO & STATO VOLO                          -->
   <!-- ========================================================================= -->
+  <div id="modal-modifica-volo" class="hidden fixed inset-0 bg-forest-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl border border-slate-200 transform transition-all">
+      
+      <div class="flex items-center justify-between border-b border-slate-100 pb-4 mb-6">
+        <div>
+          <span class="px-2.5 py-0.5 rounded bg-lime-100 text-forest-900 text-[9px] font-black uppercase tracking-wider">Aggiornamento Tratta</span>
+          <h3 class="text-base font-extrabold text-slate-900 mt-0.5" id="edit-volo-title">Modifica Volo</h3>
+        </div>
+        <button onclick="document.getElementById('modal-modifica-volo').classList.add('hidden')" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 font-bold flex items-center justify-center transition">
+          ✕
+        </button>
+      </div>
+
+      <form id="form-edit-flight" class="space-y-4">
+        <input type="hidden" id="edit-volo-id" />
+
+        <div>
+          <label class="block text-[10px] font-extrabold uppercase tracking-wider text-slate-500 mb-1.5">Nuova Tariffa Base (€)</label>
+          <input 
+            type="number" 
+            step="0.01" 
+            id="edit-volo-prezzo" 
+            required 
+            min="0" 
+            class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-lime-500 focus:bg-white transition"
+          />
+        </div>
+
+        <div>
+          <label class="block text-[10px] font-extrabold uppercase tracking-wider text-slate-500 mb-1.5">Stato Operativo Tratta</label>
+          <select id="edit-volo-stato" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-lime-500 focus:bg-white transition cursor-pointer">
+            <option value="programmato">Programmato (In Orario)</option>
+            <option value="in_volo">In Volo / Imbarco</option>
+            <option value="atterrato">Atterrato / Concluso</option>
+            <option value="cancellato">Cancellato</option>
+          </select>
+        </div>
+
+        <div class="pt-4 flex justify-end space-x-3 border-t border-slate-100 mt-6">
+          <button 
+            type="button" 
+            onclick="document.getElementById('modal-modifica-volo').classList.add('hidden')"
+            class="px-5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition"
+          >
+            Annulla
+          </button>
+          <button 
+            type="submit" 
+            class="px-6 py-2.5 rounded-xl bg-lime-500 hover:bg-lime-400 text-forest-950 font-black text-xs uppercase tracking-wider shadow-cta-glow transition"
+          >
+            Salva Modifiche
+          </button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- 6. MODALE 3: RETTIFICA PUNTI / BONUS CITTADINO                             -->
+  <!-- ========================================================================= -->
+  <div id="modal-punti-utente" class="hidden fixed inset-0 bg-forest-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl border border-slate-200 transform transition-all">
+      
+      <div class="flex items-center justify-between border-b border-slate-100 pb-4 mb-6">
+        <div>
+          <span class="px-2.5 py-0.5 rounded bg-amber-100 text-amber-900 text-[9px] font-black uppercase tracking-wider">Flying Lomb Admin</span>
+          <h3 class="text-base font-extrabold text-slate-900 mt-0.5" id="punti-modal-title">Rettifica Punti Cittadino</h3>
+        </div>
+        <button onclick="document.getElementById('modal-punti-utente').classList.add('hidden')" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 font-bold flex items-center justify-center transition">
+          ✕
+        </button>
+      </div>
+
+      <form id="form-punti-utente" class="space-y-4">
+        <input type="hidden" id="punti-utente-id" />
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-[10px] font-extrabold uppercase tracking-wider text-slate-500 mb-1.5">XP da Aggiungere (+/-)</label>
+            <input 
+              type="number" 
+              id="punti-xp-delta" 
+              required 
+              value="0" 
+              class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-lime-500 focus:bg-white transition"
+            />
+          </div>
+          <div>
+            <label class="block text-[10px] font-extrabold uppercase tracking-wider text-slate-500 mb-1.5">Miglia da Aggiungere (+/-)</label>
+            <input 
+              type="number" 
+              id="punti-miglia-delta" 
+              required 
+              value="0" 
+              class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-lime-500 focus:bg-white transition"
+            />
+          </div>
+        </div>
+
+        <p class="text-[11px] text-slate-500 font-medium">
+          Inserisci numeri positivi per accreditare bonus fedeltà (es. <code>+50</code>), o numeri negativi per stornare punti.
+        </p>
+
+        <div class="pt-4 flex justify-end space-x-3 border-t border-slate-100 mt-6">
+          <button 
+            type="button" 
+            onclick="document.getElementById('modal-punti-utente').classList.add('hidden')"
+            class="px-5 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition"
+          >
+            Annulla
+          </button>
+          <button 
+            type="submit" 
+            class="px-6 py-2.5 rounded-xl bg-lime-500 hover:bg-lime-400 text-forest-950 font-black text-xs uppercase tracking-wider shadow-cta-glow transition"
+          >
+            Conferma Rettifica
+          </button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+
+  <!-- Footer Istituzionale Riservato -->
   <footer class="bg-forest-950 text-slate-400 border-t border-white/10 py-6 mt-auto text-center text-xs">
     <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
       <div class="flex items-center space-x-2 text-[11px]">
         <div class="w-2 h-2 rounded-full bg-lime-400"></div>
-        <span>LombardiAIR S.p.A. • Controllo Operativo di Gestione Flotta Regionale</span>
+        <span>LombardiAIR S.p.A. • Controllo Operativo di Gestione Flotta & Rete Fedeltà</span>
       </div>
-      <p class="text-[11px] text-slate-500">Accesso limitato al personale autorizzato ENAC / B2B.</p>
+      <p class="text-[11px] text-slate-500">Accesso riservato al personale direzionale autorizzato.</p>
     </div>
   </footer>
 

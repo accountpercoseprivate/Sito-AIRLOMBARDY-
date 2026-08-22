@@ -107,7 +107,7 @@
   </header>
 
   <!-- ========================================================================= -->
-  <!-- 2. WELCOME HERO & PROGRAMMA "FLYING LOMB"                                 -->
+  <!-- 2. WELCOME HERO & WIDGET DINAMICO "FLYING LOMB"                           -->
   <!-- ========================================================================= -->
   <section class="bg-forest-950 text-white pt-10 pb-16 px-4 sm:px-6 lg:px-8 border-b border-white/5 relative overflow-hidden">
     <div class="absolute -right-20 -top-20 w-80 h-80 bg-lime-500/10 rounded-full filter blur-3xl pointer-events-none"></div>
@@ -122,11 +122,11 @@
           Bentornato a bordo
         </h1>
         <p class="text-xs sm:text-sm text-slate-300 mt-1 max-w-xl font-normal">
-          Gestisci i tuoi titoli di viaggio, esegui il check-in online per sbloccare la carta d'imbarco olografica 3D e accumula punti per salire di Tier.
+          Gestisci i tuoi titoli di viaggio, esegui il check-in online per sbloccare la carta 3D, accumula punti e riscatta premi esclusivi.
         </p>
       </div>
 
-      <!-- Container Dinamico Loyalty Tier Flying Lomb -->
+      <!-- Widget Loyalty Tier Dinamico -->
       <div class="flex items-center space-x-4 bg-white/5 border border-white/10 backdrop-blur-md p-4 rounded-2xl">
         <div class="w-12 h-12 rounded-2xl bg-forest-800 text-lime-400 border border-lime-500/40 flex items-center justify-center font-black text-xl shadow-md">
           ★
@@ -151,6 +151,10 @@
         <span>✈️</span>
         <span>I Miei Voli Prenotati</span>
       </button>
+      <button id="tab-btn-benefits" class="px-5 py-2.5 rounded-xl text-slate-600 hover:text-slate-900 text-xs font-bold transition-all flex items-center space-x-2">
+        <span>🎁</span>
+        <span>Benefits & Riscatto Miglia</span>
+      </button>
       <button id="tab-btn-fids" class="px-5 py-2.5 rounded-xl text-slate-600 hover:text-slate-900 text-xs font-bold transition-all flex items-center space-x-2">
         <span>📡</span>
         <span>Tabellone FIDS Partenze</span>
@@ -161,7 +165,7 @@
       </button>
     </div>
 
-    <!-- Feedback Toast -->
+    <!-- Feedback Toast Notifiche -->
     <div id="passenger-alert" class="hidden mb-6 p-4 rounded-2xl text-xs font-bold leading-relaxed border transition-all duration-300"></div>
 
     <!-- ======================================================================= -->
@@ -171,11 +175,11 @@
       <div class="flex items-center justify-between">
         <div>
           <h2 class="text-xl font-black text-slate-900 tracking-tight">Le Tue Prenotazioni Attive</h2>
-          <p class="text-xs text-slate-500 font-medium">Esegui il check-in online per sbloccare la carta d'imbarco olografica 3D e visualizzare il gate.</p>
+          <p class="text-xs text-slate-500 font-medium">Esegui il check-in online per sbloccare la carta d'imbarco olografica 3D, accumulare +5 XP e visualizzare il gate.</p>
         </div>
       </div>
 
-      <!-- Container Cards Biglietti Dinamiche da Supabase -->
+      <!-- Container Cards Biglietti da Supabase -->
       <div id="lista-biglietti-container" class="grid grid-cols-1 gap-4">
         <div class="p-12 text-center bg-white rounded-3xl border border-slate-200/80 animate-pulse">
           <div class="w-10 h-10 mx-auto rounded-full bg-slate-100 flex items-center justify-center text-slate-400 mb-3">
@@ -187,17 +191,221 @@
     </section>
 
     <!-- ======================================================================= -->
-    <!-- SEZIONE 2: TABELLONE FIDS "STILE AEROPORTO"                              -->
+    <!-- SEZIONE 2: GUIDA BENEFITS & STORE RISCATTO MIGLIA                       -->
+    <!-- ======================================================================= -->
+    <section id="section-benefits" class="hidden space-y-10">
+      
+      <!-- 2.1 GUIDA AI LIVELLI "FLYING LOMB" -->
+      <div>
+        <div class="mb-6">
+          <span class="px-2.5 py-0.5 rounded-md bg-lime-100 text-forest-900 text-[10px] font-black uppercase tracking-wider">
+            Progressione Fedeltà
+          </span>
+          <h2 class="text-xl font-black text-slate-900 tracking-tight mt-1">Livelli e Vantaggi Esclusivi "Flying Lomb"</h2>
+          <p class="text-xs text-slate-500 font-medium">Ogni volo confermato ti assegna <b>+5 XP</b> per salire di livello e <b>+50 Miglia</b> spendibili nello store.</p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          
+          <!-- Card Explorer -->
+          <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-card-soft flex flex-col justify-between">
+            <div>
+              <div class="w-10 h-10 rounded-xl bg-forest-800 text-lime-400 font-black flex items-center justify-center text-base mb-4">
+                🥉
+              </div>
+              <h3 class="text-base font-extrabold text-slate-900">Explorer</h3>
+              <span class="text-[11px] font-bold text-slate-400 block mb-3 font-mono">0 – 99 XP</span>
+              <ul class="text-xs text-slate-600 space-y-2 font-medium">
+                <li>• Accumulo base: <b>5 XP / 50 Miglia</b></li>
+                <li>• Check-in online prioritario</li>
+                <li>• Carta d'imbarco olografica 3D</li>
+              </ul>
+            </div>
+            <div class="mt-5 pt-3 border-t border-slate-100 text-[10px] font-black text-slate-400 uppercase tracking-wider">
+              Livello Base di Ingresso
+            </div>
+          </div>
+
+          <!-- Card Silver -->
+          <div class="bg-white rounded-3xl p-6 border border-slate-300 shadow-card-soft flex flex-col justify-between">
+            <div>
+              <div class="w-10 h-10 rounded-xl bg-slate-300 text-forest-950 font-black flex items-center justify-center text-base mb-4">
+                🥈
+              </div>
+              <h3 class="text-base font-extrabold text-slate-900">Silver</h3>
+              <span class="text-[11px] font-bold text-slate-400 block mb-3 font-mono">100 – 179 XP (20 Voli)</span>
+              <ul class="text-xs text-slate-600 space-y-2 font-medium">
+                <li>• Tutti i vantaggi Explorer</li>
+                <li>• <b>+10% Miglia Bonus</b> per volo</li>
+                <li>• Imbarco prioritario Gruppo 2</li>
+                <li>• Sconto 50% su bagaglio extra</li>
+              </ul>
+            </div>
+            <div class="mt-5 pt-3 border-t border-slate-100 text-[10px] font-black text-slate-500 uppercase tracking-wider">
+              Frequent Flyer
+            </div>
+          </div>
+
+          <!-- Card Gold -->
+          <div class="bg-white rounded-3xl p-6 border-2 border-amber-400 shadow-card-soft flex flex-col justify-between relative overflow-hidden">
+            <div class="absolute top-0 right-0 bg-amber-400 text-forest-950 text-[9px] font-black uppercase px-3 py-1 rounded-bl-xl">
+              Consigliato
+            </div>
+            <div>
+              <div class="w-10 h-10 rounded-xl bg-amber-400 text-forest-950 font-black flex items-center justify-center text-base mb-4">
+                🥇
+              </div>
+              <h3 class="text-base font-extrabold text-slate-900">Gold</h3>
+              <span class="text-[11px] font-bold text-amber-700 block mb-3 font-mono font-bold">180 – 299 XP (36 Voli)</span>
+              <ul class="text-xs text-slate-600 space-y-2 font-medium">
+                <li>• Tutti i vantaggi Silver</li>
+                <li>• <b>+25% Miglia Bonus</b></li>
+                <li>• <b>Fast Track Biometrico Gratuito</b></li>
+                <li>• Imbarco prioritario Gruppo 1</li>
+              </ul>
+            </div>
+            <div class="mt-5 pt-3 border-t border-slate-100 text-[10px] font-black text-amber-600 uppercase tracking-wider">
+              Priority Business
+            </div>
+          </div>
+
+          <!-- Card Platinum -->
+          <div class="bg-forest-950 text-white rounded-3xl p-6 border border-white/15 shadow-2xl flex flex-col justify-between">
+            <div>
+              <div class="w-10 h-10 rounded-xl bg-white text-forest-950 font-black flex items-center justify-center text-base mb-4">
+                💎
+              </div>
+              <h3 class="text-base font-extrabold text-white">Platinum</h3>
+              <span class="text-[11px] font-bold text-lime-400 block mb-3 font-mono font-bold">300+ XP (60 Voli)</span>
+              <ul class="text-xs text-slate-300 space-y-2 font-medium">
+                <li>• <b>+50% Miglia Bonus</b></li>
+                <li>• <b>Accesso Illimitato Lounge VIP</b></li>
+                <li>• 1 Volo Navetta Omaggio all'anno</li>
+                <li>• Assistenza dedicata H24</li>
+              </ul>
+            </div>
+            <div class="mt-5 pt-3 border-t border-white/10 text-[10px] font-black text-lime-400 uppercase tracking-wider">
+              Top Executive Club
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- 2.2 STORE RISCATTO MIGLIA -->
+      <div class="pt-6 border-t border-slate-200">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
+          <div>
+            <h2 class="text-xl font-black text-slate-900 tracking-tight">Catalogo Premi & Riscatto Miglia</h2>
+            <p class="text-xs text-slate-500 font-medium">Converti le tue Miglia in sconti e voucher approvati dall'amministrazione.</p>
+          </div>
+          <div class="bg-forest-900 text-lime-400 px-4 py-2 rounded-2xl font-mono text-xs font-black self-start sm:self-auto shadow-sm">
+            Saldo: <span id="store-user-miles">0 Miglia Disponibili</span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          
+          <!-- Premio 1: Sconto 20€ -->
+          <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-card-soft flex flex-col justify-between">
+            <div>
+              <div class="w-10 h-10 rounded-xl bg-lime-100 text-forest-900 flex items-center justify-center font-black text-lg mb-3">
+                🎟️
+              </div>
+              <h4 class="text-sm font-extrabold text-slate-900">Voucher Sconto Biglietto -€20</h4>
+              <p class="text-[11px] text-slate-500 mt-1 mb-4 font-medium leading-relaxed">
+                Buono di 20€ applicabile sulla tariffa base del tuo prossimo volo regionale.
+              </p>
+            </div>
+            <div>
+              <div class="text-xs font-black font-mono text-forest-950 mb-3">Costo: 500 Miglia</div>
+              <button onclick="richiediRiscatto('Voucher Sconto Biglietto -€20', 500)" class="w-full py-2.5 rounded-xl bg-lime-500 hover:bg-lime-400 text-forest-950 font-black text-[11px] uppercase tracking-wider transition active:scale-95 shadow-sm">
+                Richiedi Premio
+              </button>
+            </div>
+          </div>
+
+          <!-- Premio 2: Fast Track Gratis -->
+          <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-card-soft flex flex-col justify-between">
+            <div>
+              <div class="w-10 h-10 rounded-xl bg-lime-100 text-forest-900 flex items-center justify-center font-black text-lg mb-3">
+                ⚡
+              </div>
+              <h4 class="text-sm font-extrabold text-slate-900">Pass Fast Track Biometrico</h4>
+              <p class="text-[11px] text-slate-500 mt-1 mb-4 font-medium leading-relaxed">
+                Accesso prioritario ai varchi di sicurezza senza attese al gate.
+              </p>
+            </div>
+            <div>
+              <div class="text-xs font-black font-mono text-forest-950 mb-3">Costo: 250 Miglia</div>
+              <button onclick="richiediRiscatto('Pass Fast Track Biometrico', 250)" class="w-full py-2.5 rounded-xl bg-lime-500 hover:bg-lime-400 text-forest-950 font-black text-[11px] uppercase tracking-wider transition active:scale-95 shadow-sm">
+                Richiedi Premio
+              </button>
+            </div>
+          </div>
+
+          <!-- Premio 3: Lounge VIP -->
+          <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-card-soft flex flex-col justify-between">
+            <div>
+              <div class="w-10 h-10 rounded-xl bg-lime-100 text-forest-900 flex items-center justify-center font-black text-lg mb-3">
+                🍸
+              </div>
+              <h4 class="text-sm font-extrabold text-slate-900">Ingresso Lounge VIP Monza Hub</h4>
+              <p class="text-[11px] text-slate-500 mt-1 mb-4 font-medium leading-relaxed">
+                Open bar, caffetteria, Wi-Fi satellitare e sale riservate prima del volo.
+              </p>
+            </div>
+            <div>
+              <div class="text-xs font-black font-mono text-forest-950 mb-3">Costo: 600 Miglia</div>
+              <button onclick="richiediRiscatto('Ingresso Lounge VIP Monza Hub', 600)" class="w-full py-2.5 rounded-xl bg-lime-500 hover:bg-lime-400 text-forest-950 font-black text-[11px] uppercase tracking-wider transition active:scale-95 shadow-sm">
+                Richiedi Premio
+              </button>
+            </div>
+          </div>
+
+          <!-- Premio 4: Volo Omaggio -->
+          <div class="bg-forest-900 text-white rounded-3xl p-6 border border-lime-500/30 shadow-card-soft flex flex-col justify-between">
+            <div>
+              <div class="w-10 h-10 rounded-xl bg-lime-400 text-forest-950 flex items-center justify-center font-black text-lg mb-3">
+                ✈️
+              </div>
+              <h4 class="text-sm font-extrabold text-white">Volo Navetta Regionale Omaggio</h4>
+              <p class="text-[11px] text-slate-300 mt-1 mb-4 font-medium leading-relaxed">
+                Un biglietto gratuito valido su qualsiasi tratta del network regionale.
+              </p>
+            </div>
+            <div>
+              <div class="text-xs font-black font-mono text-lime-400 mb-3">Costo: 1.500 Miglia</div>
+              <button onclick="richiediRiscatto('Volo Navetta Regionale Omaggio', 1500)" class="w-full py-2.5 rounded-xl bg-lime-400 hover:bg-lime-300 text-forest-950 font-black text-[11px] uppercase tracking-wider transition active:scale-95 shadow-sm">
+                Richiedi Premio
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- 2.3 STORICO RICHIESTE RISCATTO -->
+      <div class="pt-6 border-t border-slate-200">
+        <h3 class="text-base font-extrabold text-slate-900 mb-1">Stato Richieste di Riscatto Inviate</h3>
+        <p class="text-xs text-slate-500 mb-4 font-medium">Controlla l'approvazione e la convalida dei tuoi premi da parte dell'amministrazione.</p>
+        <div id="lista-riscatti-container" class="space-y-3">
+          <div class="p-6 text-center text-slate-400 text-xs font-semibold bg-white rounded-2xl border border-slate-200">
+            Nessuna richiesta di riscatto premio inviata finora.
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ======================================================================= -->
+    <!-- SEZIONE 3: TABELLONE FIDS "STILE AEROPORTO"                              -->
     <!-- ======================================================================= -->
     <section id="section-fids" class="hidden space-y-4">
-      
-      <!-- FIDS Monitor Frame -->
       <div class="bg-black text-white rounded-3xl p-6 sm:p-8 border-4 border-slate-900 shadow-2xl shadow-forest-950/40 relative overflow-hidden font-mono">
         
-        <!-- CRT Lines Effect -->
         <div class="absolute inset-0 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%)] bg-[length:100%_4px] pointer-events-none opacity-40"></div>
 
-        <!-- FIDS Header Bar -->
         <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-6 mb-6 border-b-2 border-slate-800 gap-4 relative z-10">
           <div class="flex items-center space-x-3">
             <div class="w-3.5 h-3.5 rounded-full bg-lime-400 animate-ping"></div>
@@ -211,14 +419,12 @@
             </div>
           </div>
 
-          <!-- Orologio Digitale FIDS Live -->
           <div class="bg-slate-900 border border-slate-700 px-4 py-2 rounded-xl text-right">
             <span class="text-[9px] text-slate-400 block uppercase tracking-widest">Orario Locale (CET)</span>
             <span id="fids-clock" class="text-xl font-black text-lime-400 tracking-widest font-mono">12:00:00</span>
           </div>
         </div>
 
-        <!-- FIDS Table Header -->
         <div class="overflow-x-auto relative z-10">
           <table class="w-full text-left text-xs border-collapse">
             <thead class="text-amber-400/90 border-b border-slate-800 uppercase tracking-widest text-[11px] font-black">
@@ -230,13 +436,10 @@
                 <th class="py-3 px-4 text-right">Stato del Volo</th>
               </tr>
             </thead>
-            <tbody id="fids-table-body" class="divide-y divide-slate-900 font-bold text-slate-100 tracking-wide text-xs">
-              <!-- Righe dinamiche popolate in tempo reale da Supabase -->
-            </tbody>
+            <tbody id="fids-table-body" class="divide-y divide-slate-900 font-bold text-slate-100 tracking-wide text-xs"></tbody>
           </table>
         </div>
 
-        <!-- FIDS Footer Ticker -->
         <div class="mt-6 pt-4 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between text-[10px] text-slate-400 tracking-wider relative z-10">
           <span class="flex items-center space-x-2">
             <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
@@ -251,7 +454,7 @@
     </section>
 
     <!-- ======================================================================= -->
-    <!-- SEZIONE 3: SERVIZI ACCESSORI & EXTRA                                     -->
+    <!-- SEZIONE 4: SERVIZI ACCESSORI & EXTRA                                     -->
     <!-- ======================================================================= -->
     <section id="section-extra" class="hidden space-y-6">
       <div>
@@ -261,7 +464,6 @@
 
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         
-        <!-- Extra 1: Bagaglio da Stiva 23kg -->
         <div class="bg-white rounded-3xl p-6 border border-slate-200/90 shadow-card-soft hover:shadow-lg transition-all flex flex-col justify-between">
           <div>
             <div class="w-12 h-12 rounded-2xl bg-forest-900 text-lime-400 flex items-center justify-center font-bold text-xl mb-4">
@@ -280,7 +482,6 @@
           </button>
         </div>
 
-        <!-- Extra 2: Fast Track Biometrico -->
         <div class="bg-white rounded-3xl p-6 border border-slate-200/90 shadow-card-soft hover:shadow-lg transition-all flex flex-col justify-between">
           <div>
             <div class="w-12 h-12 rounded-2xl bg-lime-400 text-forest-950 flex items-center justify-center font-bold text-xl mb-4 shadow-sm">
@@ -299,7 +500,6 @@
           </button>
         </div>
 
-        <!-- Extra 3: Lounge VIP Monza Hub -->
         <div class="bg-white rounded-3xl p-6 border border-slate-200/90 shadow-card-soft hover:shadow-lg transition-all flex flex-col justify-between">
           <div>
             <div class="w-12 h-12 rounded-2xl bg-forest-900 text-lime-400 flex items-center justify-center font-bold text-xl mb-4">
@@ -324,7 +524,7 @@
   </main>
 
   <!-- ========================================================================= -->
-  <!-- 4. FOOTER ISTITUZIONALE                                                   -->
+  <!-- 5. FOOTER ISTITUZIONALE                                                   -->
   <!-- ========================================================================= -->
   <footer class="bg-forest-950 text-slate-400 border-t border-white/10 py-8 mt-auto text-xs">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">

@@ -1,5 +1,5 @@
 -- =============================================================================
--- PROGETTO: LombardiAIR (Schema di Produzione 100% Reale - Taratura Opzione 2)
+-- PROGETTO: LombardiAIR (Schema Master Reale - Aggiornamento Incrementale)
 -- =============================================================================
 
 -- 1. ENUM: Tier Fedeltà "Flying Lomb"
@@ -9,7 +9,7 @@ EXCEPTION
     WHEN duplicate_object THEN null;
 END $$;
 
--- 2. TABELLA: utenti_profili
+-- 2. TABELLA: utenti_profili (Aggiornamento sicuro senza cancellare dati)
 CREATE TABLE IF NOT EXISTS public.utenti_profili (
     id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
     nome TEXT,
@@ -22,13 +22,12 @@ CREATE TABLE IF NOT EXISTS public.utenti_profili (
     created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
 );
 
--- Aggiornamento colonne se la tabella esiste già
 ALTER TABLE public.utenti_profili
     ADD COLUMN IF NOT EXISTS loyalty_tier public.loyalty_tier_enum NOT NULL DEFAULT 'Explorer',
     ADD COLUMN IF NOT EXISTS miles_balance INTEGER NOT NULL DEFAULT 0 CHECK (miles_balance >= 0),
     ADD COLUMN IF NOT EXISTS xp_balance INTEGER NOT NULL DEFAULT 0 CHECK (xp_balance >= 0);
 
--- 3. TABELLA: voli
+-- 3. TABELLA: voli (Aggiornamento con supporto Charter Privato)
 CREATE TABLE IF NOT EXISTS public.voli (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     codice_volo VARCHAR(10) NOT NULL UNIQUE,
@@ -49,7 +48,7 @@ CREATE TABLE IF NOT EXISTS public.voli (
 ALTER TABLE public.voli
     ADD COLUMN IF NOT EXISTS is_private_charter BOOLEAN NOT NULL DEFAULT false;
 
--- 4. TABELLA: prenotazioni
+-- 4. TABELLA: prenotazioni (Aggiornamento Check-in e Servizi Extra)
 CREATE TABLE IF NOT EXISTS public.prenotazioni (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     codice_prenotazione VARCHAR(8) NOT NULL UNIQUE,
@@ -80,6 +79,17 @@ ALTER TABLE public.prenotazioni DROP CONSTRAINT IF EXISTS unique_posto_per_volo;
 CREATE UNIQUE INDEX IF NOT EXISTS unique_posto_attivo_per_volo 
 ON public.prenotazioni (volo_id, posto_assegnato) 
 WHERE stato != 'annullata';
+
+-- 5. TABELLA: richieste_premi (Catalogo Riscatto Miglia Flying Lomb)
+CREATE TABLE IF NOT EXISTS public.richieste_premi (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    utente_id UUID NOT NULL REFERENCES public.utenti_profili(id) ON DELETE CASCADE,
+    tipo_premio TEXT NOT NULL,
+    costo_miglia INTEGER NOT NULL CHECK (costo_miglia > 0),
+    stato TEXT NOT NULL DEFAULT 'in_attesa' CHECK (stato IN ('in_attesa', 'approvato', 'rifiutato')),
+    note_admin TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
+);
 
 -- =============================================================================
 -- TRIGGER 1: Auto-conferma Email
@@ -186,7 +196,6 @@ DECLARE
     v_volo RECORD;
     v_prenotazione RECORD;
 BEGIN
-    -- Lock riga volo
     SELECT * INTO v_volo
     FROM public.voli
     WHERE id = p_volo_id
@@ -204,7 +213,6 @@ BEGIN
         RAISE EXCEPTION 'Nessun posto disponibile su questo volo.';
     END IF;
 
-    -- Controllo duplicati posto attivo
     IF EXISTS (
         SELECT 1 FROM public.prenotazioni
         WHERE volo_id = p_volo_id 
@@ -214,7 +222,6 @@ BEGIN
         RAISE EXCEPTION 'Il posto % è già occupato. Seleziona un altro sedile.', p_posto;
     END IF;
 
-    -- Inserimento prenotazione
     INSERT INTO public.prenotazioni (
         codice_prenotazione, utente_id, volo_id,
         nome_passeggero, cognome_passeggero, documento_identita,
@@ -229,7 +236,6 @@ BEGIN
     )
     RETURNING * INTO v_prenotazione;
 
-    -- Decremento posti disponibili
     UPDATE public.voli
     SET posti_disponibili = posti_disponibili - 1
     WHERE id = p_volo_id;
@@ -268,7 +274,6 @@ BEGIN
         SET check_in_status = true
         WHERE id = v_prenotazione.id;
 
-        -- Accredito fedeltà "Flying Lomb" (+5 XP e +50 Miglia a volo)
         IF v_prenotazione.utente_id IS NOT NULL THEN
             UPDATE public.utenti_profili
             SET xp_balance = xp_balance + 5,
@@ -282,6 +287,132 @@ BEGIN
         'codice_prenotazione', v_prenotazione.codice_prenotazione,
         'check_in_status', true
     );
+END;
+$$;
+
+-- =============================================================================
+-- RPC 3: Richiesta Riscatto Premio da parte del Passeggero (Scala Miglia)
+-- =============================================================================
+CREATE OR REPLACE FUNCTION public.richiedi_riscatto_premio(
+    p_tipo_premio TEXT,
+    p_costo_miglia INTEGER
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+    v_utente RECORD;
+    v_richiesta RECORD;
+BEGIN
+    SELECT * INTO v_utente
+    FROM public.utenti_profili
+    WHERE id = auth.uid()
+    FOR UPDATE;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Profilo utente non trovato.';
+    END IF;
+
+    IF v_utente.miles_balance < p_costo_miglia THEN
+        RAISE EXCEPTION 'Saldo miglia insufficiente. Ti mancano % miglia per questo premio.', (p_costo_miglia - v_utente.miles_balance);
+    END IF;
+
+    -- Scala le miglia dal saldo
+    UPDATE public.utenti_profili
+    SET miles_balance = miles_balance - p_costo_miglia
+    WHERE id = auth.uid();
+
+    -- Registra la richiesta in stato "in_attesa"
+    INSERT INTO public.richieste_premi (utente_id, tipo_premio, costo_miglia, stato)
+    VALUES (auth.uid(), p_tipo_premio, p_costo_miglia, 'in_attesa')
+    RETURNING * INTO v_richiesta;
+
+    RETURN to_jsonb(v_richiesta);
+END;
+$$;
+
+-- =============================================================================
+-- RPC 4: Gestione Riscatto da parte dell'Admin (con Rimborso Miglia se Rifiutato)
+-- =============================================================================
+CREATE OR REPLACE FUNCTION public.gestisci_richiesta_premio_admin(
+    p_richiesta_id UUID,
+    p_nuovo_stato TEXT,
+    p_note TEXT DEFAULT NULL
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+    v_richiesta RECORD;
+BEGIN
+    IF NOT public.is_admin() THEN
+        RAISE EXCEPTION 'Accesso negato: operazione riservata agli amministratori.';
+    END IF;
+
+    SELECT * INTO v_richiesta
+    FROM public.richieste_premi
+    WHERE id = p_richiesta_id
+    FOR UPDATE;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Richiesta non trovata.';
+    END IF;
+
+    IF v_richiesta.stato != 'in_attesa' THEN
+        RAISE EXCEPTION 'Questa richiesta è già stata elaborata (Stato: %).', v_richiesta.stato;
+    END IF;
+
+    -- Se rifiutato, rimborsa le miglia al cittadino
+    IF p_nuovo_stato = 'rifiutato' THEN
+        UPDATE public.utenti_profili
+        SET miles_balance = miles_balance + v_richiesta.costo_miglia
+        WHERE id = v_richiesta.utente_id;
+    END IF;
+
+    UPDATE public.richieste_premi
+    SET stato = p_nuovo_stato,
+        note_admin = p_note
+    WHERE id = p_richiesta_id;
+
+    RETURN jsonb_build_object(
+        'success', true,
+        'richiesta_id', p_richiesta_id,
+        'stato', p_nuovo_stato
+    );
+END;
+$$;
+
+-- =============================================================================
+-- RPC 5: Modifica Punteggio/Miglia Passeggero da parte dell'Admin
+-- =============================================================================
+CREATE OR REPLACE FUNCTION public.modifica_punteggio_utente_admin(
+    p_utente_id UUID,
+    p_xp_delta INTEGER,
+    p_miglia_delta INTEGER
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+    v_utente RECORD;
+BEGIN
+    IF NOT public.is_admin() THEN
+        RAISE EXCEPTION 'Accesso negato: operazione riservata agli amministratori.';
+    END IF;
+
+    UPDATE public.utenti_profili
+    SET xp_balance = GREATEST(0, xp_balance + p_xp_delta),
+        miles_balance = GREATEST(0, miles_balance + p_miglia_delta)
+    WHERE id = p_utente_id
+    RETURNING * INTO v_utente;
+
+    RETURN to_jsonb(v_utente);
 END;
 $$;
 
@@ -305,6 +436,7 @@ $$;
 ALTER TABLE public.utenti_profili ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.voli ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.prenotazioni ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.richieste_premi ENABLE ROW LEVEL SECURITY;
 
 -- Policy Profili
 DROP POLICY IF EXISTS "Profili: visualizzazione proprietario o admin" ON public.utenti_profili;
@@ -312,11 +444,11 @@ CREATE POLICY "Profili: visualizzazione proprietario o admin"
     ON public.utenti_profili FOR SELECT
     USING (auth.uid() = id OR public.is_admin());
 
-DROP POLICY IF EXISTS "Profili: aggiornamento proprio profilo" ON public.utenti_profili;
-CREATE POLICY "Profili: aggiornamento proprio profilo"
+DROP POLICY IF EXISTS "Profili: aggiornamento proprio profilo o admin" ON public.utenti_profili;
+CREATE POLICY "Profili: aggiornamento proprio profilo o admin"
     ON public.utenti_profili FOR UPDATE
-    USING (auth.uid() = id)
-    WITH CHECK (auth.uid() = id);
+    USING (auth.uid() = id OR public.is_admin())
+    WITH CHECK (auth.uid() = id OR public.is_admin());
 
 -- Policy Voli
 DROP POLICY IF EXISTS "Voli: visibili a tutti" ON public.voli;
@@ -346,6 +478,23 @@ CREATE POLICY "Prenotazioni: aggiornamento proprietario o admin"
     ON public.prenotazioni FOR UPDATE
     USING (auth.uid() = utente_id OR public.is_admin())
     WITH CHECK (auth.uid() = utente_id OR public.is_admin());
+
+-- Policy Richieste Premi
+DROP POLICY IF EXISTS "Richieste Premi: lettura proprietario o admin" ON public.richieste_premi;
+CREATE POLICY "Richieste Premi: lettura proprietario o admin"
+    ON public.richieste_premi FOR SELECT
+    USING (auth.uid() = utente_id OR public.is_admin());
+
+DROP POLICY IF EXISTS "Richieste Premi: inserimento proprietario" ON public.richieste_premi;
+CREATE POLICY "Richieste Premi: inserimento proprietario"
+    ON public.richieste_premi FOR INSERT
+    WITH CHECK (auth.uid() = utente_id);
+
+DROP POLICY IF EXISTS "Richieste Premi: gestione riservata admin" ON public.richieste_premi;
+CREATE POLICY "Richieste Premi: gestione riservata admin"
+    ON public.richieste_premi FOR ALL
+    USING (public.is_admin())
+    WITH CHECK (public.is_admin());
 
 -- Promozione Super Admin
 UPDATE public.utenti_profili SET ruolo = 'admin' 
