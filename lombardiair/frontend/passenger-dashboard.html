@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="it" class="h-full">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Area Personale Passeggero | LombardiAIR</title>
+
+  <!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            forest: {
+              950: '#04170E',
+              900: '#0B2519',
+              850: '#0E3021',
+              800: '#14422D',
+              700: '#1C5B3E',
+            },
+            lime: {
+              400: '#A3E635',
+              500: '#84CC16',
+              600: '#65A30D',
+            }
+          },
+          boxShadow: {
+            'card-soft': '0 4px 20px -2px rgba(11, 37, 25, 0.05), 0 2px 6px -1px rgba(0, 0, 0, 0.02)',
+            'cta-glow': '0 8px 24px -4px rgba(132, 204, 22, 0.45)',
+            'fids-glow': '0 0 25px rgba(132, 204, 22, 0.15)',
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Supabase JS Client SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body class="min-h-full flex flex-col bg-[#F8FAFC] text-slate-900 font-sans antialiased selection:bg-lime-500 selection:text-forest-950">
+
+  <!-- ========================================================================= -->
+  <!-- 1. HEADER ISTITUZIONALE AREA PASSEGGERO                                   -->
+  <!-- ========================================================================= -->
+  <header class="bg-forest-900 border-b border-white/10 sticky top-0 z-40 shadow-lg shadow-forest-950/20 backdrop-blur-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+      
+      <!-- Brand Logo Vettoriale -->
+      <a href="index.html" class="flex items-center space-x-3 group">
+        <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-forest-800 to-forest-950 p-2 border border-lime-500/30 flex items-center justify-center shadow-md group-hover:scale-105 transition-transform duration-200">
+          <svg viewBox="0 0 100 80" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 28C28 28 48 38 52 58C42 53 26 48 16 38C13 35 12 31 12 28Z" fill="#145A32"/>
+            <path d="M18 38C34 38 52 48 55 63C45 58 30 53 22 45C19 42 18 40 18 38Z" fill="#27AE60"/>
+            <path d="M25 48C38 48 53 55 58 68C48 63 35 58 28 53C26 51 25 49 25 48Z" fill="#A3E635"/>
+            <path d="M52 58C68 32 88 28 92 38C96 48 82 68 58 68C70 65 80 54 78 44C74 34 60 42 52 58Z" fill="url(#limeGradPass)"/>
+            <path d="M64 40L68 34L70 35L68 40L75 42L77 41L78 42L75 45L72 49L70 49L71 45L65 43L63 45L62 44L64 40Z" fill="#FFFFFF"/>
+            <defs>
+              <linearGradient id="limeGradPass" x1="50" y1="25" x2="90" y2="65" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#A3E635"/>
+                <stop offset="1" stop-color="#65A30D"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <div>
+          <div class="flex items-center space-x-2">
+            <span class="text-xl font-extrabold tracking-tight text-white leading-none">Lombardi<span class="text-lime-400">AIR</span></span>
+            <span class="px-2 py-0.5 rounded-md bg-white/10 border border-white/15 text-slate-300 text-[10px] font-extrabold uppercase tracking-wider">
+              Club Passeggeri
+            </span>
+          </div>
+          <span class="text-[9px] uppercase tracking-widest text-slate-400 font-bold block mt-1">Portale Personale del Viaggiatore</span>
+        </div>
+      </a>
+
+      <!-- Info Utente & Azioni Navigazione -->
+      <div class="flex items-center space-x-4">
+        <div class="hidden md:flex flex-col text-right">
+          <span id="user-display-name" class="text-xs font-extrabold text-white">Caricamento Profilo...</span>
+          <span id="user-display-email" class="text-[10px] text-lime-400 font-mono">sessione verificata</span>
+        </div>
+
+        <a href="index.html" class="hidden sm:inline-flex items-center space-x-1.5 text-xs font-bold text-slate-300 hover:text-white px-3.5 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition">
+          <span>Nuova Prenotazione</span>
+          <span class="text-lime-400">↗</span>
+        </a>
+
+        <button id="btn-user-logout" class="px-3.5 py-2 rounded-xl bg-red-500/15 hover:bg-red-500/25 border border-red-500/30 text-red-300 text-xs font-bold transition flex items-center space-x-1.5 active:scale-95">
+          <span>Esci</span>
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+          </svg>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- ========================================================================= -->
+  <!-- 2. WELCOME HERO & METRICHE FEDELTÀ                                         -->
+  <!-- ========================================================================= -->
+  <section class="bg-forest-950 text-white pt-10 pb-16 px-4 sm:px-6 lg:px-8 border-b border-white/5 relative overflow-hidden">
+    <div class="absolute -right-20 -top-20 w-80 h-80 bg-lime-500/10 rounded-full filter blur-3xl pointer-events-none"></div>
+
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative z-10">
+      <div>
+        <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-white/10 border border-white/15 text-lime-400 text-[10px] font-black uppercase tracking-widest mb-3">
+          <span class="w-1.5 h-1.5 rounded-full bg-lime-400 animate-pulse"></span>
+          <span>Programma Fedeltà Regionale</span>
+        </div>
+        <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight" id="welcome-title">
+          Bentornato a bordo
+        </h1>
+        <p class="text-xs sm:text-sm text-slate-300 mt-1 max-w-xl font-normal">
+          Gestisci i tuoi titoli di viaggio olografici 3D, aggiungi servizi di bordo prioritari e monitora le partenze regionali in tempo reale.
+        </p>
+      </div>
+
+      <!-- Badge Status Club -->
+      <div class="flex items-center space-x-4 bg-white/5 border border-white/10 backdrop-blur-md p-4 rounded-2xl">
+        <div class="w-12 h-12 rounded-xl bg-lime-400 text-forest-950 flex items-center justify-center font-black text-xl shadow-md shadow-lime-500/20">
+          ★
+        </div>
+        <div>
+          <span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block">Status Frequent Flyer</span>
+          <span class="text-base font-black text-white">LombardiAIR Silver</span>
+          <span class="text-[11px] text-lime-400 block font-mono font-semibold">1.450 Miglia Regionali</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================= -->
+  <!-- 3. SEGMENTED TABS SWITCHER                                                -->
+  <!-- ========================================================================= -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-8 flex-grow w-full pb-16">
+    
+    <!-- Tab Switcher Hardware Style -->
+    <div class="bg-white/95 backdrop-blur-md p-1.5 rounded-2xl border border-slate-200 shadow-md inline-flex flex-wrap gap-1.5 mb-8">
+      <button id="tab-btn-voli" class="px-5 py-2.5 rounded-xl bg-forest-900 text-white text-xs font-extrabold shadow-sm transition-all flex items-center space-x-2">
+        <span>✈️</span>
+        <span>I Miei Voli Prenotati</span>
+      </button>
+      <button id="tab-btn-fids" class="px-5 py-2.5 rounded-xl text-slate-600 hover:text-slate-900 text-xs font-bold transition-all flex items-center space-x-2">
+        <span>📡</span>
+        <span>Tabellone FIDS Partenze</span>
+      </button>
+      <button id="tab-btn-extra" class="px-5 py-2.5 rounded-xl text-slate-600 hover:text-slate-900 text-xs font-bold transition-all flex items-center space-x-2">
+        <span>⭐</span>
+        <span>Servizi Extra & Bagagli</span>
+      </button>
+    </div>
+
+    <!-- Feedback Toast -->
+    <div id="passenger-alert" class="hidden mb-6 p-4 rounded-2xl text-xs font-bold leading-relaxed border transition-all duration-300"></div>
+
+    <!-- ======================================================================= -->
+    <!-- SEZIONE 1: I MIEI VOLI & BIGLIETTI 3D                                  -->
+    <!-- ======================================================================= -->
+    <section id="section-voli" class="space-y-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-xl font-black text-slate-900 tracking-tight">Le Tue Prenotazioni Attive</h2>
+          <p class="text-xs text-slate-500 font-medium">Visualizza il titolo digitale, scarica il PDF o ruota la carta d'imbarco olografica 3D.</p>
+        </div>
+        <button onclick="caricaPrenotazioniUtente()" class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition flex items-center space-x-1.5">
+          <span>🔄</span>
+          <span>Aggiorna</span>
+        </button>
+      </div>
+
+      <!-- Container Cards Biglietti -->
+      <div id="lista-biglietti-container" class="grid grid-cols-1 gap-4">
+        <!-- Skeleton Loading Iniziale -->
+        <div class="p-12 text-center bg-white rounded-3xl border border-slate-200/80 animate-pulse">
+          <div class="w-10 h-10 mx-auto rounded-full bg-slate-100 flex items-center justify-center text-slate-400 mb-3">
+            ✈️
+          </div>
+          <p class="text-xs font-bold text-slate-500">Recupero titoli di viaggio dal database centrale...</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================================================================= -->
+    <!-- SEZIONE 2: TABELLONE VOLI "STILE AEROPORTO" (FIDS MONITOR)              -->
+    <!-- ======================================================================= -->
+    <section id="section-fids" class="hidden space-y-4">
+      
+      <!-- FIDS Monitor Frame (Airport departures Display) -->
+      <div class="bg-black text-white rounded-3xl p-6 sm:p-8 border-4 border-slate-900 shadow-2xl shadow-forest-950/40 relative overflow-hidden font-mono">
+        
+        <!-- CRT Monitor Lines Overlay -->
+        <div class="absolute inset-0 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%)] bg-[length:100%_4px] pointer-events-none opacity-40"></div>
+
+        <!-- FIDS Header Bar -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-6 mb-6 border-b-2 border-slate-800 gap-4 relative z-10">
+          <div class="flex items-center space-x-3">
+            <div class="w-4 h-4 rounded-full bg-lime-400 animate-ping"></div>
+            <div>
+              <span class="text-amber-400 text-sm font-black tracking-widest uppercase block">
+                PARTENZE REGIONALI • DEPARTURES
+              </span>
+              <span class="text-[10px] text-slate-400 tracking-wider">
+                HUB LOMBARDIA (LINATE • MALPENSA • MONZA HUB)
+              </span>
+            </div>
+          </div>
+
+          <!-- Orologio Digitale FIDS Live -->
+          <div class="bg-slate-900 border border-slate-700 px-4 py-2 rounded-xl text-right">
+            <span class="text-[9px] text-slate-400 block uppercase tracking-widest">Orario Locale (CET)</span>
+            <span id="fids-clock" class="text-xl font-black text-lime-400 tracking-widest font-mono">12:00:00</span>
+          </div>
+        </div>
+
+        <!-- FIDS Table Header -->
+        <div class="overflow-x-auto relative z-10">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead class="text-amber-400/90 border-b border-slate-800 uppercase tracking-widest text-[11px] font-black">
+              <tr>
+                <th class="py-3 px-4">Orario</th>
+                <th class="py-3 px-4">Destinazione</th>
+                <th class="py-3 px-4">Volo</th>
+                <th class="py-3 px-4 text-center">Gate</th>
+                <th class="py-3 px-4 text-right">Stato del Volo</th>
+              </tr>
+            </thead>
+            <tbody id="fids-table-body" class="divide-y divide-slate-900 font-bold text-slate-100 tracking-wide text-xs">
+              <!-- Righe dinamiche popolate da JS -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- FIDS Footer Ticker -->
+        <div class="mt-6 pt-4 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between text-[10px] text-slate-400 tracking-wider relative z-10">
+          <span class="flex items-center space-x-2">
+            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+            <span>TUTTI I VOLI RISPETTANO GLI STANDARD DI PUNTUALITÀ REGIONALE</span>
+          </span>
+          <span class="text-amber-400/80 mt-2 sm:mt-0 font-semibold">
+            AGGIORNAMENTO AUTOMATICO OGNI 30 SECONDI
+          </span>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ======================================================================= -->
+    <!-- SEZIONE 3: SERVIZI ACCESSORI & EXTRA (BAGGAGE & FAST TRACK)             -->
+    <!-- ======================================================================= -->
+    <section id="section-extra" class="hidden space-y-6">
+      <div>
+        <h2 class="text-xl font-black text-slate-900 tracking-tight">Servizi Extra di Viaggio</h2>
+        <p class="text-xs text-slate-500 font-medium">Personalizza la tua esperienza di volo con imbarchi prioritari e franchigia bagagli aumentata.</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        
+        <!-- Extra 1: Bagaglio da Stiva 23kg -->
+        <div class="bg-white rounded-3xl p-6 border border-slate-200/90 shadow-card-soft hover:shadow-lg transition-all flex flex-col justify-between">
+          <div>
+            <div class="w-12 h-12 rounded-2xl bg-forest-900 text-lime-400 flex items-center justify-center font-bold text-xl mb-4">
+              🧳
+            </div>
+            <div class="flex items-center justify-between mb-2">
+              <h3 class="text-base font-extrabold text-slate-900">Bagaglio Stiva 23kg</h3>
+              <span class="text-base font-black text-forest-950 font-mono">€ 19.00</span>
+            </div>
+            <p class="text-xs text-slate-500 leading-relaxed font-medium mb-6">
+              Aggiungi una valigia da stiva con consegna express prioritaria al nastro bagagli dell'hub di Monza o Linate.
+            </p>
+          </div>
+          <button onclick="aggiungiServizioExtra('Bagaglio da Stiva 23kg', 19)" class="w-full py-3 rounded-2xl bg-slate-900 hover:bg-forest-900 text-white font-bold text-xs uppercase tracking-wider transition">
+            + Aggiungi al Volo
+          </button>
+        </div>
+
+        <!-- Extra 2: Fast Track Biometrico -->
+        <div class="bg-white rounded-3xl p-6 border border-slate-200/90 shadow-card-soft hover:shadow-lg transition-all flex flex-col justify-between">
+          <div>
+            <div class="w-12 h-12 rounded-2xl bg-lime-400 text-forest-950 flex items-center justify-center font-bold text-xl mb-4 shadow-sm">
+              ⚡
+            </div>
+            <div class="flex items-center justify-between mb-2">
+              <h3 class="text-base font-extrabold text-slate-900">Varco Fast Track</h3>
+              <span class="text-base font-black text-forest-950 font-mono">€ 9.00</span>
+            </div>
+            <p class="text-xs text-slate-500 leading-relaxed font-medium mb-6">
+              Corsia preferenziale ai controlli di sicurezza. Raggiungi il gate d'imbarco in meno di 3 minuti senza code.
+            </p>
+          </div>
+          <button onclick="aggiungiServizioExtra('Fast Track Biometrico', 9)" class="w-full py-3 rounded-2xl bg-lime-500 hover:bg-lime-400 text-forest-950 font-black text-xs uppercase tracking-wider shadow-cta-glow transition">
+            + Aggiungi Fast Track
+          </button>
+        </div>
+
+        <!-- Extra 3: Lounge VIP Monza Hub -->
+        <div class="bg-white rounded-3xl p-6 border border-slate-200/90 shadow-card-soft hover:shadow-lg transition-all flex flex-col justify-between">
+          <div>
+            <div class="w-12 h-12 rounded-2xl bg-forest-900 text-lime-400 flex items-center justify-center font-bold text-xl mb-4">
+              🍸
+            </div>
+            <div class="flex items-center justify-between mb-2">
+              <h3 class="text-base font-extrabold text-slate-900">Accesso Lounge VIP</h3>
+              <span class="text-base font-black text-forest-950 font-mono">€ 25.00</span>
+            </div>
+            <p class="text-xs text-slate-500 leading-relaxed font-medium mb-6">
+              Wi-Fi satellitare ad alta velocità, open bar, caffetteria premium e sale meeting riservate prima della partenza.
+            </p>
+          </div>
+          <button onclick="aggiungiServizioExtra('Accesso Lounge VIP Monza Hub', 25)" class="w-full py-3 rounded-2xl bg-slate-900 hover:bg-forest-900 text-white font-bold text-xs uppercase tracking-wider transition">
+            + Aggiungi Lounge
+          </button>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ========================================================================= -->
+  <!-- 4. FOOTER ISTITUZIONALE                                                   -->
+  <!-- ========================================================================= -->
+  <footer class="bg-forest-950 text-slate-400 border-t border-white/10 py-8 mt-auto text-xs">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="flex items-center space-x-2">
+        <span class="w-2 h-2 rounded-full bg-lime-400"></span>
+        <span class="text-slate-300 font-semibold">LombardiAIR S.p.A. • Servizio Passeggeri Conforme IATA / ENAC</span>
+      </div>
+      <p class="text-[11px] text-slate-500">Assistenza Dedicata Passeggeri: 800 90 80 70</p>
+    </div>
+  </footer>
+
+  <!-- Modulo JavaScript Dashboard Passeggero -->
+  <script type="module" src="js/passenger-dashboard.js"></script>
+</body>
+</html>
