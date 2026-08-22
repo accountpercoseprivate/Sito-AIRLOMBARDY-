@@ -148,7 +148,7 @@
   </section>
 
   <!-- ========================================================================= -->
-  <!-- 3. FLOATING BOOKING CARD (DESIGN PERFETTO SENZA SOVRAPPOSIZIONI)          -->
+  <!-- 3. FLOATING BOOKING CARD (RIPRISTINATA ESATTAMENTE COM'ERA)                -->
   <!-- ========================================================================= -->
   <div class="relative z-20 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 -mt-20 sm:-mt-24 mb-16">
     <div class="bg-white/95 backdrop-blur-2xl rounded-3xl p-6 sm:p-8 shadow-card-float border border-slate-200/80">
@@ -163,51 +163,55 @@
 
       <form id="form-cerca-voli" onsubmit="filtraVoli(event)" class="grid grid-cols-1 sm:grid-cols-12 gap-4 items-end">
         
-        <!-- Dropdown Partenza con Spaziatura e Icona SVG Corretta -->
-        <div class="sm:col-span-5">
+        <div class="sm:col-span-4">
           <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
             Hub di Partenza
           </label>
           <div class="relative">
-            <select id="search-origine" class="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-4 pr-10 py-3.5 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-lime-500 focus:bg-white transition-all appearance-none cursor-pointer">
-              <option value="TUTTI">Tutti gli Hub</option>
+            <select id="search-origine" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-lime-500 focus:bg-white transition-all appearance-none cursor-pointer">
+              <option value="TUTTI">Tutti gli Aeroporti di Partenza</option>
               <option value="LIN">Milano Linate (LIN)</option>
               <option value="MNZ">Monza Hub (MNZ)</option>
             </select>
-            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
-              </svg>
+            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400">
+              ▼
             </div>
           </div>
         </div>
 
-        <!-- Dropdown Destinazione con Spaziatura e Icona SVG Corretta -->
-        <div class="sm:col-span-5">
+        <div class="sm:col-span-4">
           <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
             Destinazione
           </label>
           <div class="relative">
-            <select id="search-destinazione" class="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-4 pr-10 py-3.5 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-lime-500 focus:bg-white transition-all appearance-none cursor-pointer">
+            <select id="search-destinazione" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-lime-500 focus:bg-white transition-all appearance-none cursor-pointer">
               <option value="TUTTI">Tutte le Destinazioni</option>
               <option value="MNZ">Monza Hub (MNZ)</option>
               <option value="LIN">Milano Linate (LIN)</option>
             </select>
-            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
-              </svg>
+            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400">
+              ▼
             </div>
           </div>
         </div>
 
-        <!-- Pulsante Filtra Tabellone -->
+        <div class="sm:col-span-2">
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+            Data del Volo
+          </label>
+          <input 
+            type="date" 
+            id="search-data" 
+            class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2.5 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-lime-500 focus:bg-white transition-all"
+          />
+        </div>
+
         <div class="sm:col-span-2">
           <button 
             type="submit" 
             class="w-full py-3.5 rounded-2xl bg-lime-500 hover:bg-lime-400 active:bg-lime-600 text-forest-950 font-extrabold text-xs tracking-wider uppercase shadow-cta-glow hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 flex items-center justify-center space-x-1.5"
           >
-            <span>Filtra</span>
+            <span>Cerca Voli</span>
             <span>→</span>
           </button>
         </div>
@@ -722,7 +726,9 @@
       e.preventDefault();
       const origine = document.getElementById('search-origine').value;
       const destinazione = document.getElementById('search-destinazione').value;
-      caricaTabelloneVoli({ origine, destinazione });
+      const data = document.getElementById('search-data')?.value;
+
+      caricaTabelloneVoli({ origine, destinazione, data });
     };
 
     window.apriCartaImbarco = function() {
