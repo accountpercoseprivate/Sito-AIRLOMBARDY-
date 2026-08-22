@@ -1,9 +1,19 @@
-from fastapi import APIRouter, HTTPException, Header, status
+import os
+from fastapi import APIRouter, HTTPException, Header, status, Query
 from typing import List, Optional
+from datetime import datetime, timezone, timedelta, date
 from config import supabase_admin, supabase
 from schemas import VoloCreate, VoloUpdate, VoloResponse, PrenotazioneResponse
 
+# Gestione fuso orario italiano (CET / CEST)
+try:
+    from zoneinfo import ZoneInfo
+    ROME_TZ = ZoneInfo("Europe/Rome")
+except Exception:
+    ROME_TZ = timezone(timedelta(hours=1))
+
 router = APIRouter()
+
 
 async def verifica_ruolo_admin(authorization: Optional[str] = Header(None)):
     """
@@ -84,13 +94,80 @@ async def modifica_volo(volo_id: str, dati: VoloUpdate, authorization: Optional[
 
 @router.delete("/voli/{volo_id}", status_code=status.HTTP_200_OK)
 async def cancella_volo(volo_id: str, authorization: Optional[str] = Header(None)):
-    """Imposta il volo su 'cancellato'."""
+    """Imposta lo stato del volo su 'cancellato'."""
     await verifica_ruolo_admin(authorization)
     try:
         res = supabase_admin.table("voli").update({"stato": "cancellato"}).eq("id", volo_id).execute()
         if not res.data:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Volo non trovato.")
         return {"messaggio": f"Volo {volo_id} contrassegnato come cancellato con successo."}
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+
+@router.post("/voli/{volo_id}/cancella", status_code=status.HTTP_200_OK)
+async def azione_cancella_volo_singolo(volo_id: str, authorization: Optional[str] = Header(None)):
+    """Azione rapida per contrassegnare un singolo volo come 'cancellato'."""
+    await verifica_ruolo_admin(authorization)
+    try:
+        res = supabase_admin.table("voli").update({"stato": "cancellato"}).eq("id", volo_id).execute()
+        if not res.data:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Volo non trovato.")
+        return {"success": True, "messaggio": f"Volo {res.data[0].get('codice_volo', volo_id)} cancellato."}
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+
+@router.post("/voli/{volo_id}/ripristina", status_code=status.HTTP_200_OK)
+async def azione_ripristina_volo_singolo(volo_id: str, authorization: Optional[str] = Header(None)):
+    """Ripristina un volo cancellato o in ritardo su 'programmato'."""
+    await verifica_ruolo_admin(authorization)
+    try:
+        res = supabase_admin.table("voli").update({"stato": "programmato", "ritardo_minuti": 0}).eq("id", volo_id).execute()
+        if not res.data:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Volo non trovato.")
+        return {"success": True, "messaggio": f"Volo {res.data[0].get('codice_volo', volo_id)} ripristinato in orario."}
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+
+@router.post("/voli/cancella-giornata", status_code=status.HTTP_200_OK)
+async def cancella_tutti_voli_giornata(authorization: Optional[str] = Header(None)):
+    """
+    Azione rapida per l'unico pilota: cancella tutti i voli della giornata odierna
+    non ancora atterrati (es. in caso di assenza o emergenza).
+    """
+    await verifica_ruolo_admin(authorization)
+    try:
+        now_locale = datetime.now(ROME_TZ)
+        data_oggi = now_locale.date()
+        
+        dt_inizio_utc = datetime(data_oggi.year, data_oggi.month, data_oggi.day, 0, 0, 0, tzinfo=ROME_TZ).astimezone(timezone.utc)
+        dt_fine_utc = datetime(data_oggi.year, data_oggi.month, data_oggi.day, 23, 59, 59, tzinfo=ROME_TZ).astimezone(timezone.utc)
+
+        res = (
+            supabase_admin.table("voli")
+            .update({"stato": "cancellato"})
+            .gte("data_ora_partenza", dt_inizio_utc.isoformat())
+            .lte("data_ora_partenza", dt_fine_utc.isoformat())
+            .not_.in_("stato", ["atterrato"])
+            .execute()
+        )
+
+        conteggio = len(res.data or [])
+        return {"success": True, "cancellati": conteggio, "messaggio": f"Cancellati con successo {conteggio} voli per oggi."}
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+
+@router.post("/voli/rigenera-giornata", status_code=status.HTTP_200_OK)
+async def rigenera_voli_giornata(authorization: Optional[str] = Header(None)):
+    """Forza la rigenerazione manuale dei voli per la giornata odierna."""
+    await verifica_ruolo_admin(authorization)
+    try:
+        from flight_scheduler import assicura_voli_del_giorno
+        await assicura_voli_del_giorno()
+        return {"success": True, "messaggio": "Controllo e rigenerazione completati."}
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
