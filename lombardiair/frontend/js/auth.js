@@ -1,8 +1,8 @@
-import { getSupabase } from './config.js';
+// =============================================================================
+// LOMBARDAIR - GESTIONE AUTENTICAZIONE SUPABASE (auth.js)
+// =============================================================================
 
-// =============================================================================
-// GESTIONE AUTENTICAZIONE SUPABASE
-// =============================================================================
+import { getSupabase } from './config.js';
 
 /**
  * Effettua il login con email e password.
@@ -39,7 +39,9 @@ export async function register(email, password, nome, cognome) {
  */
 export async function logout() {
   const sb = getSupabase();
-  await sb.auth.signOut();
+  if (sb) {
+    await sb.auth.signOut();
+  }
   window.location.href = 'index.html';
 }
 
@@ -48,18 +50,21 @@ export async function logout() {
  */
 export async function getCurrentUser() {
   const sb = getSupabase();
+  if (!sb) return null;
   const { data: { user } } = await sb.auth.getUser();
   return user;
 }
 
 /**
- * Recupera i dati del profilo e il ruolo (passeggero / admin) dalla tabella utenti_profili.
+ * Recupera i dati del profilo e il ruolo dalla tabella utenti_profili.
  */
 export async function getUserProfile() {
   const user = await getCurrentUser();
   if (!user) return null;
 
   const sb = getSupabase();
+  if (!sb) return null;
+
   const { data, error } = await sb
     .from('utenti_profili')
     .select('*')
@@ -67,15 +72,19 @@ export async function getUserProfile() {
     .single();
 
   if (error) {
-    console.error('Errore nel recupero del profilo:', error);
-    return null;
+    console.warn('Profilo in tabella utenti_profili non trovato, fallback su auth metadata:', error.message);
+    return { 
+      id: user.id, 
+      nome: user.user_metadata?.nome || user.email.split('@')[0], 
+      cognome: user.user_metadata?.cognome || '', 
+      ruolo: user.user_metadata?.ruolo || 'passeggero' 
+    };
   }
   return data;
 }
 
 /**
- * Route Guard: protegge le pagine riservate reindirizzando a login.html in caso di mancato accesso.
- * @param {string|null} requiredRole - 'admin' per pagine B2B, null per qualsiasi utente autenticato.
+ * Route Guard: protegge le pagine riservate.
  */
 export async function requireAuth(requiredRole = null) {
   const user = await getCurrentUser();
@@ -95,27 +104,51 @@ export async function requireAuth(requiredRole = null) {
 }
 
 /**
- * Aggiorna dinamicamente la navbar in base allo stato di login dell'utente.
+ * Aggiorna dinamicamente la navbar mostrando i pulsanti della Dashboard corretta.
  */
 export async function updateNavbarUI() {
   const authContainer = document.getElementById('navbar-auth-section');
   if (!authContainer) return;
 
-  const profile = await getUserProfile();
-  if (profile) {
+  const user = await getCurrentUser();
+  if (!user) {
     authContainer.innerHTML = `
-      <div class="flex items-center space-x-3 text-sm">
-        <span class="text-white font-medium">Ciao, <b class="text-lime-400">${profile.nome || 'Utente'}</b></span>
-        ${profile.ruolo === 'admin' ? '<a href="admin.html" class="bg-lime-400 text-green-950 font-bold px-2 py-1 rounded text-xs">Pannello Admin</a>' : ''}
-        <button id="btn-nav-logout" class="text-slate-300 hover:text-white border border-slate-600 px-3 py-1 rounded">Esci</button>
-      </div>
-    `;
-    document.getElementById('btn-nav-logout')?.addEventListener('click', logout);
-  } else {
-    authContainer.innerHTML = `
-      <a href="login.html" class="text-white hover:text-lime-400 text-sm font-semibold border border-lime-400/40 px-4 py-2 rounded-lg transition">
-        Accedi / Area Riservata
+      <a href="login.html" class="inline-flex items-center space-x-2 px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-xs font-bold text-white transition-all hover:-translate-y-0.5">
+        <svg class="w-4 h-4 text-lime-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+        </svg>
+        <span>Accedi / Area Riservata</span>
       </a>
     `;
+    return;
   }
+
+  const profile = await getUserProfile();
+  const nomeVisualizzato = profile?.nome || user.email.split('@')[0];
+  const isAdmin = profile?.ruolo === 'admin';
+
+  authContainer.innerHTML = `
+    <div class="flex items-center space-x-3 text-xs">
+      <span class="text-slate-300 font-medium hidden sm:inline">
+        Ciao, <b class="text-lime-400">${nomeVisualizzato}</b>
+      </span>
+      
+      ${isAdmin ? `
+        <a href="admin.html" class="px-3.5 py-2 rounded-xl bg-lime-500 hover:bg-lime-400 text-forest-950 font-black text-xs uppercase tracking-wider shadow-sm transition">
+          Pannello Admin
+        </a>
+      ` : `
+        <a href="passenger-dashboard.html" class="px-4 py-2 rounded-xl bg-lime-500 hover:bg-lime-400 text-forest-950 font-black text-xs uppercase tracking-wider shadow-cta-glow transition flex items-center space-x-1.5 hover:-translate-y-0.5">
+          <span>✈️</span>
+          <span>Area Passeggero</span>
+        </a>
+      `}
+      
+      <button id="btn-nav-logout" class="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 text-slate-300 hover:text-white text-xs font-bold transition">
+        Esci
+      </button>
+    </div>
+  `;
+
+  document.getElementById('btn-nav-logout')?.addEventListener('click', logout);
 }
