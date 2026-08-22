@@ -70,11 +70,13 @@
   <header class="bg-forest-900/95 backdrop-blur-xl border-b border-white/10 sticky top-0 z-50 transition-all">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
       
-      <!-- Brand Logo -->
+      <!-- Brand Logo Ufficiale -->
       <a href="index.html" class="flex items-center space-x-3 group">
-        <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-lime-400 to-lime-500 flex items-center justify-center text-forest-950 font-extrabold text-2xl shadow-lg shadow-lime-500/20 group-hover:scale-105 transition-transform">
-          L
-        </div>
+        <img 
+          src="./logo.png" 
+          alt="LombardiAIR Logo Ufficiale" 
+          class="h-12 w-auto object-contain group-hover:scale-105 transition-transform duration-200"
+        />
         <div>
           <span class="text-xl font-extrabold tracking-tight text-white block leading-none">Lombardi<span class="text-lime-400">AIR</span></span>
           <span class="text-[9px] uppercase tracking-widest text-slate-300 font-bold block mt-1">Servizio Navetta Regionale</span>
@@ -85,6 +87,7 @@
       <nav class="hidden md:flex items-center space-x-8 text-xs font-bold text-slate-200">
         <a href="#tabellone" class="hover:text-lime-400 transition-colors">Tabellone Voli</a>
         <a href="#carta-imbarco" class="hover:text-lime-400 transition-colors">Carta d'Imbarco 3D</a>
+        <a href="#comunicazioni" class="hover:text-lime-400 transition-colors">Novità</a>
         <a href="#servizi" class="hover:text-lime-400 transition-colors">Standard di Servizio</a>
       </nav>
 
@@ -297,7 +300,7 @@
   <!-- ========================================================================= -->
   <!-- 6. RECUPERO CARTA D'IMBARCO OLOGRAFICA 3D                                  -->
   <!-- ========================================================================= -->
-  <section id="carta-imbarco" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-24">
+  <section id="carta-imbarco" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
     <div class="bg-gradient-to-br from-forest-950 via-forest-900 to-forest-850 rounded-3xl p-8 sm:p-12 shadow-2xl text-white border border-white/10 relative overflow-hidden">
       
       <div class="absolute -right-20 -bottom-20 w-80 h-80 bg-lime-500/10 rounded-full filter blur-3xl pointer-events-none"></div>
@@ -339,16 +342,146 @@
   </section>
 
   <!-- ========================================================================= -->
-  <!-- 7. FOOTER ISTITUZIONALE                                                   -->
+  <!-- 7. SEZIONE: COMUNICAZIONI OPERATIVE E NOVITÀ                              -->
+  <!-- ========================================================================= -->
+  <section id="comunicazioni" class="bg-slate-50 border-t border-b border-slate-200/80 py-20">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      
+      <!-- Intestazione Sezione News -->
+      <div class="flex flex-col sm:flex-row sm:items-end justify-between mb-12 gap-4">
+        <div>
+          <div class="inline-flex items-center space-x-2 text-[10px] font-extrabold text-forest-800 uppercase tracking-widest mb-2 bg-lime-500/15 border border-lime-500/30 px-3 py-1 rounded-full">
+            <span class="w-1.5 h-1.5 rounded-full bg-lime-500"></span>
+            <span>Aggiornamenti & Bollettino di Rete</span>
+          </div>
+          <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+            Comunicazioni Operative e Novità
+          </h2>
+        </div>
+        <p class="text-xs text-slate-500 max-w-md font-medium">
+          Rimani aggiornato su espansioni di linea, aggiornamenti tecnologici ai gate ed agevolazioni per i residenti della Regione Lombardia.
+        </p>
+      </div>
+
+      <!-- Griglia News a 3 Colonne -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        
+        <!-- News Card 1: Apertura Nuovo Hub Monza -->
+        <article class="bg-white rounded-3xl overflow-hidden border border-slate-200/80 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col group">
+          <div class="relative h-48 overflow-hidden">
+            <img 
+              src="https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&w=800&q=80" 
+              alt="Aviosuperficie Hub Monza" 
+              class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            />
+            <span class="absolute top-4 left-4 bg-forest-950/80 backdrop-blur-md text-lime-400 text-[10px] font-extrabold px-3 py-1 rounded-full border border-white/10 uppercase tracking-wider">
+              Infrastrutture
+            </span>
+          </div>
+          <div class="p-6 sm:p-7 flex flex-col flex-grow justify-between">
+            <div>
+              <div class="text-[11px] font-bold text-slate-400 mb-2">
+                22 Agosto 2026
+              </div>
+              <h3 class="text-lg font-extrabold text-slate-900 leading-snug group-hover:text-lime-600 transition-colors mb-3">
+                Apertura Nuovo Hub di Monza
+              </h3>
+              <p class="text-xs text-slate-500 leading-relaxed font-medium mb-6">
+                Inaugurata la nuova aerostazione avanzata con imbarco biometrico zero attese per il collegamento diretto verso Malpensa e Linate.
+              </p>
+            </div>
+            <div>
+              <a href="#" class="inline-flex items-center text-xs font-black text-lime-600 group-hover:text-lime-700 transition">
+                <span>Leggi di più</span>
+                <span class="ml-1 group-hover:translate-x-1 transition-transform">→</span>
+              </a>
+            </div>
+          </div>
+        </article>
+
+        <!-- News Card 2: Scanner 3D ai Gate -->
+        <article class="bg-white rounded-3xl overflow-hidden border border-slate-200/80 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col group">
+          <div class="relative h-48 overflow-hidden">
+            <img 
+              src="https://images.unsplash.com/photo-1519074069444-1ba4ea16e6f6?auto=format&fit=crop&w=800&q=80" 
+              alt="Scanner 3D Aeroportuale" 
+              class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            />
+            <span class="absolute top-4 left-4 bg-forest-950/80 backdrop-blur-md text-lime-400 text-[10px] font-extrabold px-3 py-1 rounded-full border border-white/10 uppercase tracking-wider">
+              Tecnologia
+            </span>
+          </div>
+          <div class="p-6 sm:p-7 flex flex-col flex-grow justify-between">
+            <div>
+              <div class="text-[11px] font-bold text-slate-400 mb-2">
+                18 Agosto 2026
+              </div>
+              <h3 class="text-lg font-extrabold text-slate-900 leading-snug group-hover:text-lime-600 transition-colors mb-3">
+                Integrazione Scanner 3D ai Gate
+              </h3>
+              <p class="text-xs text-slate-500 leading-relaxed font-medium mb-6">
+                Operativi i varchi di sicurezza volumetrici di ultima generazione: i passeggeri possono transitare senza estrarre liquidi e dispositivi elettronici.
+              </p>
+            </div>
+            <div>
+              <a href="#" class="inline-flex items-center text-xs font-black text-lime-600 group-hover:text-lime-700 transition">
+                <span>Leggi di più</span>
+                <span class="ml-1 group-hover:translate-x-1 transition-transform">→</span>
+              </a>
+            </div>
+          </div>
+        </article>
+
+        <!-- News Card 3: Tariffe Agevolate Residenti -->
+        <article class="bg-white rounded-3xl overflow-hidden border border-slate-200/80 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col group">
+          <div class="relative h-48 overflow-hidden">
+            <img 
+              src="https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=800&q=80" 
+              alt="Tariffe Agevolate Voli" 
+              class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            />
+            <span class="absolute top-4 left-4 bg-forest-950/80 backdrop-blur-md text-lime-400 text-[10px] font-extrabold px-3 py-1 rounded-full border border-white/10 uppercase tracking-wider">
+              Tariffe
+            </span>
+          </div>
+          <div class="p-6 sm:p-7 flex flex-col flex-grow justify-between">
+            <div>
+              <div class="text-[11px] font-bold text-slate-400 mb-2">
+                10 Agosto 2026
+              </div>
+              <h3 class="text-lg font-extrabold text-slate-900 leading-snug group-hover:text-lime-600 transition-colors mb-3">
+                Tariffe Agevolate Residenti 2026
+              </h3>
+              <p class="text-xs text-slate-500 leading-relaxed font-medium mb-6">
+                Approvato il nuovo piano di continuità territoriale per cittadini e pendolari lombardi con sconti dedicati fino al 40% sulle tratte navetta.
+              </p>
+            </div>
+            <div>
+              <a href="#" class="inline-flex items-center text-xs font-black text-lime-600 group-hover:text-lime-700 transition">
+                <span>Leggi di più</span>
+                <span class="ml-1 group-hover:translate-x-1 transition-transform">→</span>
+              </a>
+            </div>
+          </div>
+        </article>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================= -->
+  <!-- 8. FOOTER ISTITUZIONALE                                                   -->
   <!-- ========================================================================= -->
   <footer class="bg-forest-950 text-slate-400 border-t border-white/10 py-12 mt-auto">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex flex-col md:flex-row items-center justify-between gap-6 pb-8 border-b border-white/10">
         
         <div class="flex items-center space-x-3">
-          <div class="w-8 h-8 rounded-xl bg-lime-400 text-forest-950 font-black flex items-center justify-center text-sm">
-            L
-          </div>
+          <img 
+            src="./logo.png" 
+            alt="LombardiAIR" 
+            class="h-8 w-auto object-contain"
+          />
           <div>
             <span class="text-sm font-extrabold text-white">LombardiAIR S.p.A.</span>
             <span class="text-[10px] block text-slate-500">Infrastrutture Aeree di Trasporto Regionale</span>
@@ -391,6 +524,8 @@
 
     // 2. Funzione Caricamento Tabellone Voli
     window.caricaTabelloneVoli = async function(filtri = {}) {
+      if (!container) return;
+
       container.innerHTML = `
         <div class="p-8 text-center text-slate-400 text-xs font-medium">
           <span class="inline-block animate-spin mr-2">⚙️</span>
@@ -456,7 +591,7 @@
               <div class="flex items-center space-x-4 w-full lg:w-auto">
                 <div class="w-14 h-14 rounded-2xl bg-forest-900 text-lime-400 flex flex-col items-center justify-center flex-shrink-0 shadow-sm">
                   <span class="text-[9px] font-extrabold tracking-widest uppercase opacity-70">VOLO</span>
-                  <span class="text-xs font-black">${v.codice_volo}</span>
+                  <span class="text-xs font-black font-mono">${v.codice_volo}</span>
                 </div>
 
                 <div>
@@ -478,7 +613,7 @@
               <div class="flex items-center justify-between lg:justify-end space-x-6 w-full lg:w-auto pt-3 lg:pt-0 border-t lg:border-t-0 border-slate-200">
                 <div class="text-left lg:text-right">
                   <span class="text-[10px] font-bold text-slate-400 block uppercase">Disponibilità: <b class="${v.posti_disponibili <= 5 ? 'text-red-500' : 'text-forest-800'}">${v.posti_disponibili}/${v.posti_totali} posti</b></span>
-                  <span class="text-xl font-black text-forest-950">€ ${parseFloat(v.prezzo_base).toFixed(2)}</span>
+                  <span class="text-xl font-black font-mono text-forest-950">€ ${parseFloat(v.prezzo_base).toFixed(2)}</span>
                 </div>
 
                 ${isSoldOut ? `
