@@ -1,201 +1,412 @@
 <!DOCTYPE html>
-<html lang="it">
+<html lang="it" class="h-full">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Prenotazione Volo | LombardiAIR</title>
+  <title>Prenotazione Volo & Servizi | LombardiAIR</title>
   
-  <!-- Tailwind CSS & Supabase JS SDK via CDN -->
+  <!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS, Three.js & Supabase JS SDK via CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="stylesheet" href="css/style.css" />
-</head>
-<body class="bg-slate-100 min-h-screen flex flex-col justify-between">
 
-  <!-- Fascia Istituzionale Superiore -->
-  <header class="gov-topbar py-3.5 px-6 shadow-md text-white">
-    <div class="max-w-6xl mx-auto flex items-center justify-between">
-      <div class="flex items-center space-x-3">
-        <div class="w-8 h-8 rounded bg-lime-400 flex items-center justify-center font-black text-green-950 text-lg">
-          L
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            forest: {
+              950: '#04170E',
+              900: '#0B2519',
+              850: '#0E3021',
+              800: '#14422D',
+              700: '#1C5B3E',
+            },
+            lime: {
+              400: '#A3E635',
+              500: '#84CC16',
+              600: '#65A30D',
+            }
+          },
+          boxShadow: {
+            'card-soft': '0 4px 20px -2px rgba(11, 37, 25, 0.05), 0 2px 6px -1px rgba(0, 0, 0, 0.02)',
+            'cta-glow': '0 8px 24px -4px rgba(132, 204, 22, 0.45)',
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="min-h-full flex flex-col bg-[#F8FAFC] text-slate-900 font-sans antialiased selection:bg-lime-500 selection:text-forest-950">
+
+  <!-- ========================================================================= -->
+  <!-- 1. HEADER ISTITUZIONALE                                                   -->
+  <!-- ========================================================================= -->
+  <header class="bg-forest-900 border-b border-white/10 sticky top-0 z-40 shadow-md">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 h-20 flex items-center justify-between">
+      
+      <!-- Brand Logo Vettoriale -->
+      <a href="index.html" class="flex items-center space-x-3 group">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-forest-800 to-forest-950 p-1.5 border border-lime-500/30 flex items-center justify-center shadow-md">
+          <svg viewBox="0 0 100 80" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 28C28 28 48 38 52 58C42 53 26 48 16 38C13 35 12 31 12 28Z" fill="#145A32"/>
+            <path d="M18 38C34 38 52 48 55 63C45 58 30 53 22 45C19 42 18 40 18 38Z" fill="#27AE60"/>
+            <path d="M25 48C38 48 53 55 58 68C48 63 35 58 28 53C26 51 25 49 25 48Z" fill="#A3E635"/>
+            <path d="M52 58C68 32 88 28 92 38C96 48 82 68 58 68C70 65 80 54 78 44C74 34 60 42 52 58Z" fill="#A3E635"/>
+            <path d="M64 40L68 34L70 35L68 40L75 42L77 41L78 42L75 45L72 49L70 49L71 45L65 43L63 45L62 44L64 40Z" fill="#FFFFFF"/>
+          </svg>
         </div>
         <div>
-          <a href="index.html" class="text-xl font-bold tracking-tight hover:text-lime-300">LombardiAIR</a>
-          <p class="text-[10px] text-slate-300 uppercase font-semibold">Flusso Ufficiale di Emissione Titoli di Viaggio</p>
+          <span class="text-lg font-extrabold tracking-tight text-white block leading-none">Lombardi<span class="text-lime-400">AIR</span></span>
+          <span class="text-[9px] text-slate-300 uppercase font-semibold block mt-0.5">Emissione Titoli di Viaggio & Scelta Sedile 3D</span>
         </div>
-      </div>
-      <a href="index.html" class="text-xs text-lime-400 hover:underline font-semibold">
+      </a>
+
+      <a href="index.html" class="text-xs font-bold text-slate-300 hover:text-lime-400 transition">
         ✕ Annulla e torna alla Home
       </a>
     </div>
   </header>
 
-  <!-- Indicatore di Avanzamento Step -->
-  <div class="bg-white border-b border-slate-200 py-4 shadow-sm">
+  <!-- ========================================================================= -->
+  <!-- 2. TRACKER A 3 STEP                                                       -->
+  <!-- ========================================================================= -->
+  <div class="bg-white border-b border-slate-200 py-3.5 shadow-sm sticky top-20 z-30">
     <div class="max-w-4xl mx-auto px-4 flex items-center justify-between">
-      <div id="step-tab-1" class="flex items-center space-x-2 text-green-900 font-bold text-sm">
-        <span class="w-6 h-6 rounded-full bg-green-900 text-lime-400 flex items-center justify-center text-xs">1</span>
+      
+      <div id="step-tab-1" class="flex items-center space-x-2 text-forest-900 font-black text-xs">
+        <span class="w-6 h-6 rounded-full bg-forest-900 text-lime-400 flex items-center justify-center text-[10px]">1</span>
         <span>Dati Passeggero</span>
       </div>
-      <div class="w-12 h-0.5 bg-slate-300"></div>
-      <div id="step-tab-2" class="flex items-center space-x-2 text-slate-400 font-bold text-sm">
-        <span class="w-6 h-6 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center text-xs">2</span>
-        <span>Scelta Posto a Bordo</span>
+      
+      <div class="w-8 sm:w-16 h-0.5 bg-slate-200"></div>
+      
+      <div id="step-tab-2" class="flex items-center space-x-2 text-slate-400 font-bold text-xs">
+        <span class="w-6 h-6 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center text-[10px]">2</span>
+        <span>Posto 3D & Servizi Extra</span>
       </div>
-      <div class="w-12 h-0.5 bg-slate-300"></div>
-      <div id="step-tab-3" class="flex items-center space-x-2 text-slate-400 font-bold text-sm">
-        <span class="w-6 h-6 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center text-xs">3</span>
-        <span>Riepilogo & Emissione</span>
+      
+      <div class="w-8 sm:w-16 h-0.5 bg-slate-200"></div>
+      
+      <div id="step-tab-3" class="flex items-center space-x-2 text-slate-400 font-bold text-xs">
+        <span class="w-6 h-6 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center text-[10px]">3</span>
+        <span>Riepilogo & Conferma</span>
       </div>
+
     </div>
   </div>
 
-  <!-- Contenuto Principale del Checkout -->
+  <!-- ========================================================================= -->
+  <!-- 3. CONTENUTO PRINCIPALE CHECKOUT                                          -->
+  <!-- ========================================================================= -->
   <main class="max-w-4xl mx-auto px-4 py-8 flex-grow w-full">
     
     <!-- Card Riepilogo Volo Selezionato -->
-    <div id="flight-summary-card" class="bg-white rounded-xl border border-slate-200 p-5 mb-6 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+    <div id="flight-summary-card" class="bg-white rounded-3xl border border-slate-200/90 p-5 mb-6 shadow-card-soft flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
       <div class="flex items-center space-x-4">
-        <div class="bg-slate-100 border border-slate-300 font-black text-green-950 px-3 py-1.5 rounded text-sm" id="sum-code">---</div>
+        <div class="w-12 h-12 rounded-2xl bg-forest-900 text-lime-400 flex flex-col items-center justify-center font-mono shadow-sm">
+          <span class="text-[8px] font-black uppercase opacity-70">VOLO</span>
+          <span class="text-xs font-black" id="sum-code">LMB</span>
+        </div>
         <div>
-          <div class="text-sm font-black text-slate-900" id="sum-route">Caricamento itinerario...</div>
-          <div class="text-xs text-slate-500" id="sum-date">---</div>
+          <div class="text-base font-extrabold text-slate-900" id="sum-route">Caricamento itinerario...</div>
+          <div class="text-xs text-slate-500 font-semibold" id="sum-date">---</div>
         </div>
       </div>
-      <div class="text-right">
-        <span class="text-xs text-slate-400 block font-semibold">Tariffa Regolamentata</span>
-        <span class="text-xl font-black text-green-900" id="sum-price">€ 0.00</span>
+      <div class="text-left sm:text-right">
+        <span class="text-[10px] text-slate-400 font-extrabold uppercase block tracking-wider">Tariffa Base Istituzionale</span>
+        <span class="text-xl font-black text-forest-950 font-mono" id="sum-price">€ 0.00</span>
       </div>
     </div>
 
     <!-- Alert Box Errori -->
-    <div id="booking-error" class="hidden mb-6 p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm font-semibold"></div>
+    <div id="booking-error" class="hidden mb-6 p-4 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold shadow-sm"></div>
 
-    <!-- STEP 1: DATI PASSEGGERO -->
-    <div id="step-1-container" class="bg-white rounded-2xl border border-slate-200 p-6 md:p-8 shadow-sm">
+    <!-- ======================================================================= -->
+    <!-- STEP 1: DATI PASSEGGERO                                                 -->
+    <!-- ======================================================================= -->
+    <div id="step-1-container" class="bg-white rounded-3xl border border-slate-200/90 p-6 md:p-8 shadow-card-soft">
       <h2 class="text-xl font-black text-slate-900 mb-1">1. Dati Anagrafici del Passeggero</h2>
-      <p class="text-xs text-slate-500 mb-6">I dati devono corrispondere esattamente al documento d'identità che esibirai al gate d'imbarco.</p>
+      <p class="text-xs text-slate-500 mb-6 font-medium">I dati devono corrispondere esattamente al documento d'identità che esibirai al gate d'imbarco.</p>
 
       <form id="form-passenger" class="space-y-4">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Nome</label>
+            <label class="block text-[10px] font-extrabold uppercase tracking-wider text-slate-500 mb-1.5">Nome</label>
             <input type="text" id="pass-nome" required placeholder="Mario" 
-                   class="w-full p-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-lime-500 focus:outline-none text-sm font-medium" />
+                   class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-lime-500 focus:bg-white transition" />
           </div>
           <div>
-            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Cognome</label>
+            <label class="block text-[10px] font-extrabold uppercase tracking-wider text-slate-500 mb-1.5">Cognome</label>
             <input type="text" id="pass-cognome" required placeholder="Rossi" 
-                   class="w-full p-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-lime-500 focus:outline-none text-sm font-medium" />
+                   class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-lime-500 focus:bg-white transition" />
           </div>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Numero Documento (Carta d'Identità o Passaporto)</label>
+            <label class="block text-[10px] font-extrabold uppercase tracking-wider text-slate-500 mb-1.5">Numero Documento (Carta d'Identità o Passaporto)</label>
             <input type="text" id="pass-documento" required placeholder="Es. CA00000AA" 
-                   class="w-full p-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-lime-500 focus:outline-none text-sm font-medium uppercase" />
+                   class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 uppercase focus:outline-none focus:ring-2 focus:ring-lime-500 focus:bg-white transition" />
           </div>
           <div>
-            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Codice Fiscale (Opzionale)</label>
+            <label class="block text-[10px] font-extrabold uppercase tracking-wider text-slate-500 mb-1.5">Codice Fiscale (Opzionale)</label>
             <input type="text" id="pass-cf" placeholder="Es. RSSMRA80A01F205X" 
-                   class="w-full p-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-lime-500 focus:outline-none text-sm font-medium uppercase" />
+                   class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 uppercase focus:outline-none focus:ring-2 focus:ring-lime-500 focus:bg-white transition" />
           </div>
         </div>
 
         <div class="pt-4 flex justify-end">
-          <button type="submit" class="btn-action-lime px-8 py-3 rounded-lg text-sm font-bold shadow">
-            Procedi alla Scelta del Posto →
+          <button type="submit" class="px-8 py-3.5 rounded-2xl bg-lime-500 hover:bg-lime-400 active:bg-lime-600 text-forest-950 font-black text-xs uppercase tracking-wider shadow-cta-glow transition-all">
+            Procedi alla Scelta del Posto 3D →
           </button>
         </div>
       </form>
     </div>
 
-    <!-- STEP 2: SELEZIONE POSTO CABINA -->
-    <div id="step-2-container" class="hidden bg-white rounded-2xl border border-slate-200 p-6 md:p-8 shadow-sm">
-      <div class="flex items-center justify-between mb-4">
-        <div>
-          <h2 class="text-xl font-black text-slate-900">2. Seleziona il tuo Sedile</h2>
-          <p class="text-xs text-slate-500">Configurazione standard Airbus A320 regionale (File 1-10, 3+3 posti).</p>
-        </div>
-        <div class="text-right">
-          <span class="text-xs text-slate-400 font-semibold block">Posto Selezionato</span>
-          <span id="selected-seat-display" class="text-lg font-black text-lime-600">Nessuno</span>
-        </div>
-      </div>
-
-      <!-- Legenda Posti -->
-      <div class="flex items-center space-x-6 text-xs text-slate-600 mb-6 bg-slate-50 p-3 rounded-lg border border-slate-200">
-        <div class="flex items-center space-x-2">
-          <div class="w-4 h-4 rounded bg-slate-100 border border-slate-300"></div>
-          <span>Disponibile</span>
-        </div>
-        <div class="flex items-center space-x-2">
-          <div class="w-4 h-4 rounded bg-lime-400 border border-lime-600"></div>
-          <span class="font-bold text-green-950">Selezionato</span>
-        </div>
-        <div class="flex items-center space-x-2">
-          <div class="w-4 h-4 rounded bg-slate-200 border border-slate-300 line-through text-slate-400"></div>
-          <span>Occupato</span>
-        </div>
-      </div>
-
-      <!-- Fusoliera Sedili -->
-      <div class="aircraft-cabin max-w-md mx-auto">
-        <div class="text-center font-bold text-xs text-slate-400 uppercase tracking-widest pb-3 border-b border-slate-100 mb-4">
-          ▲ Prua / Cabina di Pilotaggio ▲
-        </div>
+    <!-- ======================================================================= -->
+    <!-- STEP 2: SCELTA POSTO 3D/2D & SERVIZI ACCESSORI                          -->
+    <!-- ======================================================================= -->
+    <div id="step-2-container" class="hidden space-y-8">
+      
+      <!-- Box Selettore Sedile 3D / 2D -->
+      <div class="bg-white rounded-3xl border border-slate-200/90 p-6 md:p-8 shadow-card-soft">
         
-        <div id="seat-map-grid" class="seat-grid"></div>
-
-        <div class="text-center font-bold text-xs text-slate-400 uppercase tracking-widest pt-4 border-t border-slate-100 mt-4">
-          ▼ Coda dell'aeromobile ▼
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 mb-6 border-b border-slate-100 gap-4">
+          <div>
+            <span class="px-2.5 py-0.5 rounded-md bg-lime-100 text-forest-900 text-[10px] font-black uppercase tracking-wider">
+              Mappa Cabina Fusoliera
+            </span>
+            <h2 class="text-xl font-black text-slate-900 mt-1">2. Seleziona il tuo Sedile</h2>
+            <p class="text-xs text-slate-500 font-medium">Trascina per ruotare la cabina 3D o clicca direttamente sul sedile desiderato.</p>
+          </div>
+          
+          <div class="text-left sm:text-right bg-slate-50 border border-slate-200 p-3 rounded-2xl">
+            <span class="text-[10px] text-slate-400 font-bold uppercase block">Posto Selezionato</span>
+            <span id="selected-seat-display" class="text-base font-black text-forest-950 font-mono">Nessuno</span>
+          </div>
         </div>
+
+        <!-- Switcher Visuale 3D / 2D -->
+        <div class="flex justify-center mb-6">
+          <div class="p-1 rounded-2xl bg-slate-100 border border-slate-200 inline-flex gap-1">
+            <button id="btn-view-3d" type="button" class="px-4 py-2 rounded-xl bg-forest-900 text-white font-extrabold text-xs shadow-sm transition flex items-center space-x-1.5">
+              <span>🌐</span>
+              <span>Cabina 3D Three.js</span>
+            </button>
+            <button id="btn-view-2d" type="button" class="px-4 py-2 rounded-xl text-slate-600 hover:text-slate-900 font-bold text-xs transition flex items-center space-x-1.5">
+              <span>📐</span>
+              <span>Mappa 2D</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Legenda Posti -->
+        <div class="flex flex-wrap items-center justify-center gap-6 text-xs text-slate-600 mb-6 bg-slate-50 p-3 rounded-2xl border border-slate-200">
+          <div class="flex items-center space-x-2">
+            <div class="w-4 h-4 rounded-md bg-slate-100 border border-slate-300"></div>
+            <span class="font-medium text-slate-700">Disponibile</span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <div class="w-4 h-4 rounded-md bg-lime-400 border border-lime-600"></div>
+            <span class="font-black text-forest-950">Selezionato</span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <div class="w-4 h-4 rounded-md bg-slate-600 border border-slate-700"></div>
+            <span class="font-medium text-slate-400">Occupato</span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <span class="text-amber-500 font-bold">★</span>
+            <span class="font-medium text-slate-700">File 1-3 Premium (+€5.00)</span>
+          </div>
+        </div>
+
+        <!-- Viewport 3D Three.js -->
+        <div id="cabin-3d-wrapper" class="relative rounded-3xl overflow-hidden border-2 border-forest-950 shadow-2xl bg-forest-950">
+          <div id="cabin-3d-viewport" class="w-full h-[380px] cursor-grab active:cursor-grabbing"></div>
+          <div class="absolute bottom-3 left-4 right-4 flex items-center justify-between text-[10px] text-slate-400 font-mono pointer-events-none">
+            <span>◄ TRASCINA PER RUOTARE</span>
+            <span>ROTELLINA / PINCH PER ZOOMARE LUNGO IL CORRIDOIO ►</span>
+          </div>
+        </div>
+
+        <!-- Viewport 2D Alternativo -->
+        <div id="seat-map-2d-wrapper" class="hidden mt-6">
+          <div class="aircraft-cabin max-w-md mx-auto">
+            <div class="text-center font-bold text-xs text-slate-400 uppercase tracking-widest pb-3 border-b border-slate-100 mb-4">
+              ▲ Prua / Cabina di Pilotaggio ▲
+            </div>
+            <div id="seat-map-grid" class="seat-grid"></div>
+            <div class="text-center font-bold text-xs text-slate-400 uppercase tracking-widest pt-4 border-t border-slate-100 mt-4">
+              ▼ Coda dell'aeromobile ▼
+            </div>
+          </div>
+        </div>
+
       </div>
 
-      <div class="pt-6 flex items-center justify-between border-t border-slate-100 mt-6">
-        <button id="btn-back-to-step1" class="text-sm font-semibold text-slate-600 hover:text-slate-900">
-          ← Modifica Dati Passeggero
-        </button>
-        <button id="btn-to-step3" disabled class="btn-action-lime px-8 py-3 rounded-lg text-sm font-bold shadow">
-          Vai al Riepilogo →
-        </button>
+      <!-- Box Catalogo Servizi Accessori di Viaggio -->
+      <div class="bg-white rounded-3xl border border-slate-200/90 p-6 md:p-8 shadow-card-soft">
+        
+        <div class="mb-6">
+          <span class="px-2.5 py-0.5 rounded-md bg-lime-100 text-forest-900 text-[10px] font-black uppercase tracking-wider">
+            Personalizzazione Viaggio
+          </span>
+          <h3 class="text-lg font-black text-slate-900 mt-1">Aggiungi Servizi Accessori al Volo</h3>
+          <p class="text-xs text-slate-500 font-medium">Seleziona i servizi desiderati per includerli direttamente nel tuo titolo di viaggio.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          
+          <!-- Extra 1: Pasto a Bordo Catering -->
+          <label class="p-4 rounded-2xl border border-slate-200 hover:border-lime-500/50 bg-slate-50 hover:bg-white cursor-pointer transition flex items-start space-x-3.5 select-none">
+            <input type="checkbox" id="extra-meal" class="w-4 h-4 mt-1 text-lime-600 rounded border-slate-300 focus:ring-lime-500" />
+            <div class="flex-grow">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-extrabold text-slate-900">🍽️ Pasto a Bordo Catering</span>
+                <span class="text-xs font-black text-forest-900 font-mono">+€ 14.00</span>
+              </div>
+              <p class="text-[11px] text-slate-500 mt-0.5">Box gourmet regionale servito caldo direttamente al tuo sedile durante il volo.</p>
+            </div>
+          </label>
+
+          <!-- Extra 2: Imbarco Prioritario Gruppo 1 -->
+          <label class="p-4 rounded-2xl border border-slate-200 hover:border-lime-500/50 bg-slate-50 hover:bg-white cursor-pointer transition flex items-start space-x-3.5 select-none">
+            <input type="checkbox" id="extra-priority" class="w-4 h-4 mt-1 text-lime-600 rounded border-slate-300 focus:ring-lime-500" />
+            <div class="flex-grow">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-extrabold text-slate-900">🚀 Imbarco Prioritario Gruppo 1</span>
+                <span class="text-xs font-black text-forest-900 font-mono">+€ 6.00</span>
+              </div>
+              <p class="text-[11px] text-slate-500 mt-0.5">Entra per primo a bordo della navetta senza code sulla passerella del gate.</p>
+            </div>
+          </label>
+
+          <!-- Extra 3: Animale in Cabina -->
+          <label class="p-4 rounded-2xl border border-slate-200 hover:border-lime-500/50 bg-slate-50 hover:bg-white cursor-pointer transition flex items-start space-x-3.5 select-none">
+            <input type="checkbox" id="extra-pet" class="w-4 h-4 mt-1 text-lime-600 rounded border-slate-300 focus:ring-lime-500" />
+            <div class="flex-grow">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-extrabold text-slate-900">🐾 Pass Animale in Cabina</span>
+                <span class="text-xs font-black text-forest-900 font-mono">+€ 29.00</span>
+              </div>
+              <p class="text-[11px] text-slate-500 mt-0.5">Autorizzazione per viaggiare con il tuo animale domestico al seguito in cabina.</p>
+            </div>
+          </label>
+
+          <!-- Extra 4: Bagaglio Stiva 23kg -->
+          <label class="p-4 rounded-2xl border border-slate-200 hover:border-lime-500/50 bg-slate-50 hover:bg-white cursor-pointer transition flex items-start space-x-3.5 select-none">
+            <input type="checkbox" id="extra-baggage" class="w-4 h-4 mt-1 text-lime-600 rounded border-slate-300 focus:ring-lime-500" />
+            <div class="flex-grow">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-extrabold text-slate-900">🧳 Bagaglio da Stiva 23kg</span>
+                <span class="text-xs font-black text-forest-900 font-mono">+€ 19.00</span>
+              </div>
+              <p class="text-[11px] text-slate-500 mt-0.5">Franchigia valigia da stiva con consegna rapida all'aviosuperficie di arrivo.</p>
+            </div>
+          </label>
+
+          <!-- Extra 5: Fast Track Biometrico -->
+          <label class="p-4 rounded-2xl border border-slate-200 hover:border-lime-500/50 bg-slate-50 hover:bg-white cursor-pointer transition flex items-start space-x-3.5 select-none">
+            <input type="checkbox" id="extra-fast-track" class="w-4 h-4 mt-1 text-lime-600 rounded border-slate-300 focus:ring-lime-500" />
+            <div class="flex-grow">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-extrabold text-slate-900">⚡ Varco Fast Track Biometrico</span>
+                <span class="text-xs font-black text-forest-900 font-mono">+€ 9.00</span>
+              </div>
+              <p class="text-[11px] text-slate-500 mt-0.5">Corsia preferenziale dedicata per superare i varchi di sicurezza in meno di 2 minuti.</p>
+            </div>
+          </label>
+
+          <!-- Extra 6: Lounge VIP Monza Hub -->
+          <label class="p-4 rounded-2xl border border-slate-200 hover:border-lime-500/50 bg-slate-50 hover:bg-white cursor-pointer transition flex items-start space-x-3.5 select-none">
+            <input type="checkbox" id="extra-lounge" class="w-4 h-4 mt-1 text-lime-600 rounded border-slate-300 focus:ring-lime-500" />
+            <div class="flex-grow">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-extrabold text-slate-900">🍸 Accesso Lounge VIP Monza Hub</span>
+                <span class="text-xs font-black text-forest-900 font-mono">+€ 25.00</span>
+              </div>
+              <p class="text-[11px] text-slate-500 mt-0.5">Open bar, caffetteria, Wi-Fi satellitare e sale meeting riservate prima della partenza.</p>
+            </div>
+          </label>
+
+        </div>
+
+        <!-- Barra di Navigazione Step 2 -->
+        <div class="pt-6 flex flex-col sm:flex-row items-start sm:items-center justify-between border-t border-slate-100 mt-8 gap-4">
+          <div>
+            <button id="btn-back-to-step1" type="button" class="text-xs font-extrabold text-slate-600 hover:text-slate-900 transition">
+              ← Modifica Dati Passeggero
+            </button>
+          </div>
+
+          <div class="flex items-center space-x-6 w-full sm:w-auto justify-between sm:justify-end">
+            <div class="text-right">
+              <span class="text-[10px] text-slate-400 font-bold uppercase block">Totale Stimato</span>
+              <span class="text-xl font-black text-forest-950 font-mono dynamic-total-price">€ 0.00</span>
+            </div>
+            <button id="btn-to-step3" type="button" disabled class="px-8 py-3.5 rounded-2xl bg-lime-500 hover:bg-lime-400 active:bg-lime-600 text-forest-950 font-black text-xs uppercase tracking-wider shadow-cta-glow transition-all disabled:opacity-40 disabled:cursor-not-allowed">
+              Vai al Riepilogo →
+            </button>
+          </div>
+        </div>
+
       </div>
+
     </div>
 
-    <!-- STEP 3: RIEPILOGO & CONFERMA -->
-    <div id="step-3-container" class="hidden bg-white rounded-2xl border border-slate-200 p-6 md:p-8 shadow-sm">
-      <h2 class="text-xl font-black text-slate-900 mb-1">3. Riepilogo e Conferma Emissione</h2>
-      <p class="text-xs text-slate-500 mb-6">Verifica i dati della tua prenotazione prima dell'emissione ufficiale.</p>
+    <!-- ======================================================================= -->
+    <!-- STEP 3: RIEPILOGO & CONFERMA EMISSIONE                                  -->
+    <!-- ======================================================================= -->
+    <div id="step-3-container" class="hidden bg-white rounded-3xl border border-slate-200/90 p-6 md:p-8 shadow-card-soft">
+      <h2 class="text-xl font-black text-slate-900 mb-1">3. Riepilogo & Conferma Emissione</h2>
+      <p class="text-xs text-slate-500 mb-6 font-medium">Verifica i dati del biglietto e i servizi aggiuntivi prima della convalida finale.</p>
 
-      <div class="bg-slate-50 rounded-xl border border-slate-200 p-5 space-y-4 mb-6 text-sm">
-        <div class="flex justify-between border-b border-slate-200 pb-2">
-          <span class="text-slate-500">Passeggero:</span>
-          <span class="font-bold text-slate-900" id="summary-passenger">---</span>
+      <div class="bg-slate-50 rounded-2xl border border-slate-200 p-6 space-y-4 mb-6 text-xs">
+        <div class="flex justify-between border-b border-slate-200/80 pb-3">
+          <span class="text-slate-500 font-bold">Passeggero Registrato:</span>
+          <span class="font-extrabold text-slate-900" id="summary-passenger">---</span>
         </div>
-        <div class="flex justify-between border-b border-slate-200 pb-2">
-          <span class="text-slate-500">Documento d'Identità:</span>
-          <span class="font-bold text-slate-900" id="summary-doc">---</span>
+        <div class="flex justify-between border-b border-slate-200/80 pb-3">
+          <span class="text-slate-500 font-bold">Documento d'Identità:</span>
+          <span class="font-extrabold text-slate-900 font-mono uppercase" id="summary-doc">---</span>
         </div>
-        <div class="flex justify-between border-b border-slate-200 pb-2">
-          <span class="text-slate-500">Volo & Orario:</span>
-          <span class="font-bold text-slate-900" id="summary-flight-time">---</span>
+        <div class="flex justify-between border-b border-slate-200/80 pb-3">
+          <span class="text-slate-500 font-bold">Tratta & Schedulazione:</span>
+          <span class="font-extrabold text-slate-900 font-mono" id="summary-flight-time">---</span>
         </div>
-        <div class="flex justify-between border-b border-slate-200 pb-2">
-          <span class="text-slate-500">Posto Assegnato:</span>
-          <span class="font-black text-lime-700 bg-lime-100 px-2 py-0.5 rounded" id="summary-seat">---</span>
+        <div class="flex justify-between border-b border-slate-200/80 pb-3">
+          <span class="text-slate-500 font-bold">Sedile Riservato:</span>
+          <span class="font-black text-lime-800 bg-lime-100 border border-lime-300 px-3 py-0.5 rounded-lg text-sm" id="summary-seat">---</span>
         </div>
-        <div class="flex justify-between pt-2 text-base">
-          <span class="font-black text-slate-900">Totale Dovuto:</span>
-          <span class="font-black text-2xl text-green-900" id="summary-total">€ 0.00</span>
+        
+        <!-- Lista Extra Inclusi -->
+        <div class="border-b border-slate-200/80 pb-3">
+          <span class="text-slate-500 font-bold block mb-2">Servizi Accessori Inclusi:</span>
+          <div id="summary-extras-list" class="space-y-1 pl-2"></div>
+        </div>
+
+        <div class="flex justify-between pt-2 text-sm items-center">
+          <span class="font-black text-slate-900">Totale Complessivo Dovuto:</span>
+          <span class="font-black text-2xl text-forest-950 font-mono" id="summary-total">€ 0.00</span>
         </div>
       </div>
 
-      <div class="pt-4 flex items-center justify-between">
-        <button id="btn-back-to-step2" class="text-sm font-semibold text-slate-600 hover:text-slate-900">
-          ← Cambia Posto
+      <div class="pt-4 flex items-center justify-between border-t border-slate-100">
+        <button id="btn-back-to-step2" type="button" class="text-xs font-extrabold text-slate-600 hover:text-slate-900 transition">
+          ← Cambia Posto o Servizi Extra
         </button>
-        <button id="btn-confirm-booking" class="btn-action-lime px-10 py-3.5 rounded-lg text-sm font-black shadow-lg">
+        <button id="btn-confirm-booking" type="button" class="px-10 py-4 rounded-2xl bg-lime-500 hover:bg-lime-400 text-forest-950 font-black text-xs uppercase tracking-wider shadow-cta-glow transition-all">
           Conferma ed Emetti Biglietto
         </button>
       </div>
@@ -203,11 +414,38 @@
 
   </main>
 
-  <footer class="bg-green-950 text-slate-400 py-4 text-center text-xs">
-    © LombardiAIR S.p.A. - Procedura certificata di emissione biglietti.
+  <!-- Footer Istituzionale -->
+  <footer class="bg-forest-950 text-slate-400 py-6 text-center text-xs mt-auto border-t border-white/10">
+    © 2026 LombardiAIR S.p.A. - Procedura certificata di emissione biglietti e scelta sedili conforme IATA.
   </footer>
 
-  <!-- Modulo JS Esterno Flusso Prenotazione -->
+  <!-- Script Switcher 3D/2D Viewport -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const btn3D = document.getElementById('btn-view-3d');
+      const btn2D = document.getElementById('btn-view-2d');
+      const wrapper3D = document.getElementById('cabin-3d-wrapper');
+      const wrapper2D = document.getElementById('seat-map-2d-wrapper');
+
+      if (btn3D && btn2D && wrapper3D && wrapper2D) {
+        btn3D.addEventListener('click', () => {
+          btn3D.className = 'px-4 py-2 rounded-xl bg-forest-900 text-white font-extrabold text-xs shadow-sm transition flex items-center space-x-1.5';
+          btn2D.className = 'px-4 py-2 rounded-xl text-slate-600 hover:text-slate-900 font-bold text-xs transition flex items-center space-x-1.5';
+          wrapper3D.classList.remove('hidden');
+          wrapper2D.classList.add('hidden');
+        });
+
+        btn2D.addEventListener('click', () => {
+          btn2D.className = 'px-4 py-2 rounded-xl bg-forest-900 text-white font-extrabold text-xs shadow-sm transition flex items-center space-x-1.5';
+          btn3D.className = 'px-4 py-2 rounded-xl text-slate-600 hover:text-slate-900 font-bold text-xs transition flex items-center space-x-1.5';
+          wrapper2D.classList.remove('hidden');
+          wrapper3D.classList.add('hidden');
+        });
+      }
+    });
+  </script>
+
+  <!-- Modulo JS Flusso Prenotazione -->
   <script type="module" src="js/booking-flow.js"></script>
 </body>
 </html>

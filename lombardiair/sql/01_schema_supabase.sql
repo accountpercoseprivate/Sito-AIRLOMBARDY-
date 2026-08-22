@@ -1,5 +1,5 @@
 -- =============================================================================
--- PROGETTO: LombardiAIR (Schema Master Reale - Aggiornamento Incrementale)
+-- PROGETTO: LombardiAIR (Schema V3 - Supporto Worker Voli, Ritardi & Nuovi Extra)
 -- =============================================================================
 
 -- 1. ENUM: Tier Fedeltà "Flying Lomb"
@@ -9,7 +9,7 @@ EXCEPTION
     WHEN duplicate_object THEN null;
 END $$;
 
--- 2. TABELLA: utenti_profili (Aggiornamento sicuro senza cancellare dati)
+-- 2. TABELLA: utenti_profili
 CREATE TABLE IF NOT EXISTS public.utenti_profili (
     id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
     nome TEXT,
@@ -27,7 +27,7 @@ ALTER TABLE public.utenti_profili
     ADD COLUMN IF NOT EXISTS miles_balance INTEGER NOT NULL DEFAULT 0 CHECK (miles_balance >= 0),
     ADD COLUMN IF NOT EXISTS xp_balance INTEGER NOT NULL DEFAULT 0 CHECK (xp_balance >= 0);
 
--- 3. TABELLA: voli (Aggiornamento con supporto Charter Privato)
+-- 3. TABELLA: voli (Aggiornamento stati operativi e ritardi)
 CREATE TABLE IF NOT EXISTS public.voli (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     codice_volo VARCHAR(10) NOT NULL UNIQUE,
@@ -38,7 +38,8 @@ CREATE TABLE IF NOT EXISTS public.voli (
     posti_totali INTEGER NOT NULL DEFAULT 180 CHECK (posti_totali > 0),
     posti_disponibili INTEGER NOT NULL DEFAULT 180 CHECK (posti_disponibili >= 0),
     prezzo_base NUMERIC(10, 2) NOT NULL CHECK (prezzo_base >= 0),
-    stato TEXT NOT NULL DEFAULT 'programmato' CHECK (stato IN ('programmato', 'in_volo', 'atterrato', 'cancellato')),
+    stato TEXT NOT NULL DEFAULT 'programmato',
+    ritardo_minuti INTEGER NOT NULL DEFAULT 0 CHECK (ritardo_minuti >= 0),
     is_private_charter BOOLEAN NOT NULL DEFAULT false,
     created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
     CONSTRAINT check_date_congrue CHECK (data_ora_arrivo > data_ora_partenza),
@@ -46,9 +47,18 @@ CREATE TABLE IF NOT EXISTS public.voli (
 );
 
 ALTER TABLE public.voli
+    ADD COLUMN IF NOT EXISTS ritardo_minuti INTEGER NOT NULL DEFAULT 0 CHECK (ritardo_minuti >= 0),
     ADD COLUMN IF NOT EXISTS is_private_charter BOOLEAN NOT NULL DEFAULT false;
 
--- 4. TABELLA: prenotazioni (Aggiornamento Check-in e Servizi Extra)
+-- Aggiorna il vincolo sugli stati operativi del volo (inclusi boarding, ritardi e charter)
+ALTER TABLE public.voli DROP CONSTRAINT IF EXISTS voli_stato_check;
+ALTER TABLE public.voli DROP CONSTRAINT IF EXISTS check_stato_valido;
+
+ALTER TABLE public.voli 
+    ADD CONSTRAINT check_stato_valido 
+    CHECK (stato IN ('programmato', 'in_imbarco', 'in_volo', 'atterrato', 'in_ritardo', 'cancellato'));
+
+-- 4. TABELLA: prenotazioni (Nuovi Servizi Accessori Integrati)
 CREATE TABLE IF NOT EXISTS public.prenotazioni (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     codice_prenotazione VARCHAR(8) NOT NULL UNIQUE,
@@ -64,6 +74,10 @@ CREATE TABLE IF NOT EXISTS public.prenotazioni (
     extra_baggage BOOLEAN NOT NULL DEFAULT false,
     fast_track BOOLEAN NOT NULL DEFAULT false,
     lounge_access BOOLEAN NOT NULL DEFAULT false,
+    in_flight_meal BOOLEAN NOT NULL DEFAULT false,
+    priority_boarding BOOLEAN NOT NULL DEFAULT false,
+    pet_in_cabin BOOLEAN NOT NULL DEFAULT false,
+    seat_selection_fee NUMERIC(10, 2) NOT NULL DEFAULT 0.00 CHECK (seat_selection_fee >= 0),
     created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
 );
 
@@ -71,16 +85,20 @@ ALTER TABLE public.prenotazioni
     ADD COLUMN IF NOT EXISTS check_in_status BOOLEAN NOT NULL DEFAULT false,
     ADD COLUMN IF NOT EXISTS extra_baggage BOOLEAN NOT NULL DEFAULT false,
     ADD COLUMN IF NOT EXISTS fast_track BOOLEAN NOT NULL DEFAULT false,
-    ADD COLUMN IF NOT EXISTS lounge_access BOOLEAN NOT NULL DEFAULT false;
+    ADD COLUMN IF NOT EXISTS lounge_access BOOLEAN NOT NULL DEFAULT false,
+    ADD COLUMN IF NOT EXISTS in_flight_meal BOOLEAN NOT NULL DEFAULT false,
+    ADD COLUMN IF NOT EXISTS priority_boarding BOOLEAN NOT NULL DEFAULT false,
+    ADD COLUMN IF NOT EXISTS pet_in_cabin BOOLEAN NOT NULL DEFAULT false,
+    ADD COLUMN IF NOT EXISTS seat_selection_fee NUMERIC(10, 2) NOT NULL DEFAULT 0.00 CHECK (seat_selection_fee >= 0);
 
--- Indice Parziale: garantisce sedili univoci solo per biglietti attivi
+-- Indice Parziale sui sedili attivi
 ALTER TABLE public.prenotazioni DROP CONSTRAINT IF EXISTS unique_posto_per_volo;
 
 CREATE UNIQUE INDEX IF NOT EXISTS unique_posto_attivo_per_volo 
 ON public.prenotazioni (volo_id, posto_assegnato) 
 WHERE stato != 'annullata';
 
--- 5. TABELLA: richieste_premi (Catalogo Riscatto Miglia Flying Lomb)
+-- 5. TABELLA: richieste_premi (Store Riscatto Miglia)
 CREATE TABLE IF NOT EXISTS public.richieste_premi (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     utente_id UUID NOT NULL REFERENCES public.utenti_profili(id) ON DELETE CASCADE,
@@ -146,8 +164,7 @@ CREATE TRIGGER on_auth_user_created
     FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
 -- =============================================================================
--- TRIGGER 3: Calcolo Automatico del Tier "Flying Lomb"
--- Explorer (0-99 XP) | Silver (100-179 XP) | Gold (180-299 XP) | Platinum (300+ XP)
+-- TRIGGER 3: Calcolo Automatico Tier "Flying Lomb"
 -- =============================================================================
 CREATE OR REPLACE FUNCTION public.calcola_loyalty_tier()
 RETURNS TRIGGER 
@@ -176,7 +193,7 @@ CREATE TRIGGER tr_aggiorna_loyalty_tier
     EXECUTE FUNCTION public.calcola_loyalty_tier();
 
 -- =============================================================================
--- RPC 1: Prenotazione Volo Atomica (Lock anti race-condition)
+-- RPC 1: Prenotazione Volo Atomica
 -- =============================================================================
 CREATE OR REPLACE FUNCTION public.crea_prenotazione_atomica(
     p_volo_id UUID,
@@ -185,7 +202,14 @@ CREATE OR REPLACE FUNCTION public.crea_prenotazione_atomica(
     p_cognome TEXT,
     p_documento TEXT,
     p_posto VARCHAR(4),
-    p_pnr VARCHAR(8)
+    p_pnr VARCHAR(8),
+    p_extra_baggage BOOLEAN DEFAULT false,
+    p_fast_track BOOLEAN DEFAULT false,
+    p_lounge_access BOOLEAN DEFAULT false,
+    p_in_flight_meal BOOLEAN DEFAULT false,
+    p_priority_boarding BOOLEAN DEFAULT false,
+    p_pet_in_cabin BOOLEAN DEFAULT false,
+    p_seat_fee NUMERIC(10, 2) DEFAULT 0.00
 )
 RETURNS JSONB
 LANGUAGE plpgsql
@@ -195,6 +219,7 @@ AS $$
 DECLARE
     v_volo RECORD;
     v_prenotazione RECORD;
+    v_prezzo_totale NUMERIC(10, 2);
 BEGIN
     SELECT * INTO v_volo
     FROM public.voli
@@ -205,8 +230,8 @@ BEGIN
         RAISE EXCEPTION 'Volo non trovato.';
     END IF;
 
-    IF v_volo.stato != 'programmato' THEN
-        RAISE EXCEPTION 'Il volo non è più prenotabile.';
+    IF v_volo.stato NOT IN ('programmato', 'in_imbarco', 'in_ritardo') THEN
+        RAISE EXCEPTION 'Il volo non è più prenotabile (Stato: %).', v_volo.stato;
     END IF;
 
     IF v_volo.posti_disponibili <= 0 THEN
@@ -222,17 +247,22 @@ BEGIN
         RAISE EXCEPTION 'Il posto % è già occupato. Seleziona un altro sedile.', p_posto;
     END IF;
 
+    -- Calcolo totale finale con eventuali extra iniziali
+    v_prezzo_totale := v_volo.prezzo_base + COALESCE(p_seat_fee, 0.00);
+
     INSERT INTO public.prenotazioni (
         codice_prenotazione, utente_id, volo_id,
         nome_passeggero, cognome_passeggero, documento_identita,
         posto_assegnato, prezzo_finale, stato,
-        check_in_status, extra_baggage, fast_track, lounge_access
+        check_in_status, extra_baggage, fast_track, lounge_access,
+        in_flight_meal, priority_boarding, pet_in_cabin, seat_selection_fee
     )
     VALUES (
         p_pnr, p_utente_id, p_volo_id,
         p_nome, p_cognome, p_documento,
-        p_posto, v_volo.prezzo_base, 'confermata',
-        false, false, false, false
+        p_posto, v_prezzo_totale, 'confermata',
+        false, p_extra_baggage, p_fast_track, p_lounge_access,
+        p_in_flight_meal, p_priority_boarding, p_pet_in_cabin, p_seat_fee
     )
     RETURNING * INTO v_prenotazione;
 
@@ -245,7 +275,7 @@ END;
 $$;
 
 -- =============================================================================
--- RPC 2: Esecuzione Check-in Online Reale (+5 XP e +50 Miglia)
+-- RPC 2: Esecuzione Check-in Online (+5 XP e +50 Miglia)
 -- =============================================================================
 CREATE OR REPLACE FUNCTION public.esegui_checkin_online(p_pnr VARCHAR(8))
 RETURNS JSONB
@@ -291,7 +321,7 @@ END;
 $$;
 
 -- =============================================================================
--- RPC 3: Richiesta Riscatto Premio da parte del Passeggero (Scala Miglia)
+-- RPC 3: Richiesta Riscatto Premio da parte del Cittadino (Scala Miglia)
 -- =============================================================================
 CREATE OR REPLACE FUNCTION public.richiedi_riscatto_premio(
     p_tipo_premio TEXT,
@@ -319,12 +349,10 @@ BEGIN
         RAISE EXCEPTION 'Saldo miglia insufficiente. Ti mancano % miglia per questo premio.', (p_costo_miglia - v_utente.miles_balance);
     END IF;
 
-    -- Scala le miglia dal saldo
     UPDATE public.utenti_profili
     SET miles_balance = miles_balance - p_costo_miglia
     WHERE id = auth.uid();
 
-    -- Registra la richiesta in stato "in_attesa"
     INSERT INTO public.richieste_premi (utente_id, tipo_premio, costo_miglia, stato)
     VALUES (auth.uid(), p_tipo_premio, p_costo_miglia, 'in_attesa')
     RETURNING * INTO v_richiesta;
@@ -334,7 +362,7 @@ END;
 $$;
 
 -- =============================================================================
--- RPC 4: Gestione Riscatto da parte dell'Admin (con Rimborso Miglia se Rifiutato)
+-- RPC 4: Gestione Riscatto Admin (con Rimborso se Rifiutato)
 -- =============================================================================
 CREATE OR REPLACE FUNCTION public.gestisci_richiesta_premio_admin(
     p_richiesta_id UUID,
@@ -366,7 +394,6 @@ BEGIN
         RAISE EXCEPTION 'Questa richiesta è già stata elaborata (Stato: %).', v_richiesta.stato;
     END IF;
 
-    -- Se rifiutato, rimborsa le miglia al cittadino
     IF p_nuovo_stato = 'rifiutato' THEN
         UPDATE public.utenti_profili
         SET miles_balance = miles_balance + v_richiesta.costo_miglia
@@ -387,7 +414,7 @@ END;
 $$;
 
 -- =============================================================================
--- RPC 5: Modifica Punteggio/Miglia Passeggero da parte dell'Admin
+-- RPC 5: Modifica Punteggi/Miglia da parte dell'Admin
 -- =============================================================================
 CREATE OR REPLACE FUNCTION public.modifica_punteggio_utente_admin(
     p_utente_id UUID,
@@ -413,6 +440,40 @@ BEGIN
     RETURNING * INTO v_utente;
 
     RETURN to_jsonb(v_utente);
+END;
+$$;
+
+-- =============================================================================
+-- RPC 6: Azione Rapida Ritardo / Imprevisto Volo (Admin)
+-- =============================================================================
+CREATE OR REPLACE FUNCTION public.imposta_ritardo_volo_admin(
+    p_volo_id UUID,
+    p_minuti_ritardo INTEGER,
+    p_nuovo_stato TEXT DEFAULT 'in_ritardo'
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+    v_volo RECORD;
+BEGIN
+    IF NOT public.is_admin() THEN
+        RAISE EXCEPTION 'Accesso negato: operazione riservata agli amministratori.';
+    END IF;
+
+    UPDATE public.voli
+    SET ritardo_minuti = p_minuti_ritardo,
+        stato = p_nuovo_stato
+    WHERE id = p_volo_id
+    RETURNING * INTO v_volo;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Volo non trovato.';
+    END IF;
+
+    RETURN to_jsonb(v_volo);
 END;
 $$;
 

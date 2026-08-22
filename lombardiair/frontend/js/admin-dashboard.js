@@ -1,5 +1,6 @@
 // =============================================================================
 // LOMBARDAIR - CONTROL ROOM AMMINISTRATIVA B2B REALE (admin-dashboard.js)
+// Gestione Azioni Rapide Ritardi, Manifest Extra, Approvazione Premi & Punti
 // =============================================================================
 
 import { getSupabase } from './config.js';
@@ -109,7 +110,7 @@ async function loadStats() {
     const prenotazioni = prenRes.data || [];
 
     const totVoli = voli.length;
-    const voliAttivi = voli.filter(v => v.stato === 'programmato' || v.stato === 'in_volo').length;
+    const voliAttivi = voli.filter(v => v.stato === 'programmato' || v.stato === 'in_imbarco' || v.stato === 'in_volo' || v.stato === 'in_ritardo').length;
     const totPrenotazioni = prenotazioni.length;
     const incassoTotale = prenotazioni.reduce((acc, p) => acc + parseFloat(p.prezzo_finale || 0), 0);
 
@@ -125,7 +126,7 @@ async function loadStats() {
 }
 
 // =============================================================================
-// 2. TABELLA FLOTTA VOLI & MODIFICA TARIFFE / STATO
+// 2. TABELLA FLOTTA VOLI & AZIONI RAPIDE RITARDI (+15M / +30M / RIPRISTINO)
 // =============================================================================
 
 window.loadFlightsTable = async function() {
@@ -153,9 +154,15 @@ window.loadFlightsTable = async function() {
 
     tableVoliBody.innerHTML = flights.map(v => {
       const isCancellato = v.stato === 'cancellato';
+      const hasRitardo = v.ritardo_minuti > 0;
+
+      let statoBadge = `<span class="badge-status ${v.stato}">${v.stato}</span>`;
+      if (hasRitardo) {
+        statoBadge = `<span class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase bg-amber-100 text-amber-950 border border-amber-300">⚠️ RITARDO +${v.ritardo_minuti}M</span>`;
+      }
 
       return `
-        <tr class="hover:bg-slate-50/80 transition border-b border-slate-100">
+        <tr class="hover:bg-slate-50/80 transition border-b border-slate-100 text-xs">
           <td class="px-6 py-4 font-mono font-black text-forest-950 text-sm">
             ${v.codice_volo}
           </td>
@@ -164,7 +171,7 @@ window.loadFlightsTable = async function() {
             <span class="text-lime-600 font-bold px-1">➔</span> 
             <span class="font-extrabold text-slate-900">${v.aeroporto_destinazione}</span>
           </td>
-          <td class="px-6 py-4 text-xs font-semibold">
+          <td class="px-6 py-4 font-semibold">
             <div class="text-slate-900"><b>Partenza:</b> ${formatDate(v.data_ora_partenza)}</div>
             <div class="text-slate-400"><b>Arrivo:</b> ${formatDate(v.data_ora_arrivo)}</div>
           </td>
@@ -179,7 +186,7 @@ window.loadFlightsTable = async function() {
           </td>
           <td class="px-6 py-4">
             <div class="flex items-center gap-1.5 flex-wrap">
-              <span class="badge-status ${v.stato}">${v.stato}</span>
+              ${statoBadge}
               ${v.is_private_charter ? `
                 <span class="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-amber-100 text-amber-900 border border-amber-300">
                   VIP Charter
@@ -187,12 +194,24 @@ window.loadFlightsTable = async function() {
               ` : ''}
             </div>
           </td>
-          <td class="px-6 py-4 text-right space-x-1.5 whitespace-nowrap">
-            <button onclick="apriModaleModificaVolo('${v.id}', '${v.codice_volo}', ${v.prezzo_base}, '${v.stato}')" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 transition">
-              ✏️ Modifica
-            </button>
+          <td class="px-6 py-4 text-right space-x-1 whitespace-nowrap">
+            <!-- Azioni Rapide Ritardi -->
             ${!isCancellato ? `
-              <button onclick="cancellaVolo('${v.id}', '${v.codice_volo}')" class="text-red-600 hover:text-red-800 text-xs font-bold bg-red-50 hover:bg-red-100 border border-red-200/60 px-3 py-1.5 rounded-xl transition">
+              <button onclick="dichiaraRitardo('${v.id}', '${v.codice_volo}', 15)" title="Applica 15 minuti di ritardo" class="px-2 py-1 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-lg text-[10px] font-black text-amber-800 transition">
+                ⏱️ +15m
+              </button>
+              <button onclick="dichiaraRitardo('${v.id}', '${v.codice_volo}', 30)" title="Applica 30 minuti di ritardo" class="px-2 py-1 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-lg text-[10px] font-black text-amber-800 transition">
+                ⏱️ +30m
+              </button>
+              ${hasRitardo ? `
+                <button onclick="ripristinaVolo('${v.id}', '${v.codice_volo}')" title="Ripristina schedulazione regolare" class="px-2 py-1 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg text-[10px] font-black text-emerald-800 transition">
+                  ✓ In Orario
+                </button>
+              ` : ''}
+              <button onclick="apriModaleModificaVolo('${v.id}', '${v.codice_volo}', ${v.prezzo_base}, '${v.stato}')" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-lg text-[10px] font-bold text-slate-700 transition">
+                ✏️ Modifica
+              </button>
+              <button onclick="cancellaVolo('${v.id}', '${v.codice_volo}')" class="text-red-600 hover:text-red-800 text-[10px] font-bold bg-red-50 hover:bg-red-100 border border-red-200 px-2.5 py-1 rounded-lg transition">
                 Cancella
               </button>
             ` : `
@@ -205,6 +224,50 @@ window.loadFlightsTable = async function() {
 
   } catch (err) {
     tableVoliBody.innerHTML = `<tr><td colspan="7" class="px-6 py-8 text-center text-red-600 font-bold">${err.message}</td></tr>`;
+  }
+};
+
+window.dichiaraRitardo = async function(voloId, codice, minuti) {
+  try {
+    const sb = getSupabase();
+    showAlert(`Applicazione ritardo di +${minuti} minuti al volo ${codice}...`);
+
+    const { data, error } = await sb.rpc('imposta_ritardo_volo_admin', {
+      p_volo_id: voloId,
+      p_minuti_ritardo: minuti,
+      p_nuovo_stato: 'in_ritardo'
+    });
+
+    if (error) throw error;
+
+    showAlert(`✓ Volo ${codice} aggiornato con +${minuti} minuti di ritardo.`);
+    await loadFlightsTable();
+    await loadStats();
+
+  } catch (err) {
+    showAlert(`Errore applicazione ritardo: ${err.message}`, true);
+  }
+};
+
+window.ripristinaVolo = async function(voloId, codice) {
+  try {
+    const sb = getSupabase();
+    showAlert(`Ripristino orario regolare per volo ${codice}...`);
+
+    const { data, error } = await sb.rpc('imposta_ritardo_volo_admin', {
+      p_volo_id: voloId,
+      p_minuti_ritardo: 0,
+      p_nuovo_stato: 'programmato'
+    });
+
+    if (error) throw error;
+
+    showAlert(`✓ Volo ${codice} ripristinato su "In Orario".`);
+    await loadFlightsTable();
+    await loadStats();
+
+  } catch (err) {
+    showAlert(`Errore ripristino: ${err.message}`, true);
   }
 };
 
@@ -248,7 +311,7 @@ if (formEditFlight) {
       if (error) throw error;
 
       modalModificaVolo?.classList.add('hidden');
-      showAlert("Volo aggiornato con successo.");
+      showAlert("Volo e tariffa base aggiornati con successo.");
       await loadFlightsTable();
       await loadStats();
     } catch (err) {
@@ -258,7 +321,7 @@ if (formEditFlight) {
 }
 
 // =============================================================================
-// 3. MANIFEST PASSEGGERI (CHECK-IN STATUS & SERVIZI EXTRA)
+// 3. MANIFEST PASSEGGERI (CHECK-IN STATUS & TUTTI I 6 SERVIZI EXTRA)
 // =============================================================================
 
 window.loadPassengersTable = async function() {
@@ -282,10 +345,15 @@ window.loadPassengersTable = async function() {
       const v = b.voli || {};
       const isCheckedIn = b.check_in_status === true;
 
+      // Elenco Completo Servizi Extra Reali
       const extras = [];
-      if (b.extra_baggage) extras.push('<span class="px-2 py-0.5 bg-blue-50 text-blue-800 rounded border border-blue-200 text-[10px] font-bold">🧳 23kg</span>');
+      if (b.in_flight_meal) extras.push('<span class="px-2 py-0.5 bg-orange-50 text-orange-900 border border-orange-200 rounded text-[10px] font-bold">🍽️ Pasto Catering</span>');
+      if (b.priority_boarding) extras.push('<span class="px-2 py-0.5 bg-lime-50 text-forest-900 border border-lime-300 rounded text-[10px] font-bold">🚀 Gruppo 1 Priority</span>');
+      if (b.pet_in_cabin) extras.push('<span class="px-2 py-0.5 bg-purple-50 text-purple-900 border border-purple-200 rounded text-[10px] font-bold">🐾 Pet Pass</span>');
+      if (b.extra_baggage) extras.push('<span class="px-2 py-0.5 bg-blue-50 text-blue-800 rounded border border-blue-200 text-[10px] font-bold">🧳 Bagaglio 23kg</span>');
       if (b.fast_track) extras.push('<span class="px-2 py-0.5 bg-lime-50 text-forest-900 rounded border border-lime-300 text-[10px] font-bold">⚡ Fast Track</span>');
-      if (b.lounge_access) extras.push('<span class="px-2 py-0.5 bg-amber-50 text-amber-800 rounded border border-amber-300 text-[10px] font-bold">🍸 Lounge</span>');
+      if (b.lounge_access) extras.push('<span class="px-2 py-0.5 bg-amber-50 text-amber-800 rounded border border-amber-300 text-[10px] font-bold">🍸 Lounge VIP</span>');
+      if (b.seat_selection_fee > 0) extras.push('<span class="px-2 py-0.5 bg-slate-100 text-slate-800 rounded border border-slate-200 text-[10px] font-bold">⭐ Posto Premium</span>');
 
       return `
         <tr class="hover:bg-slate-50/80 transition border-b border-slate-100 text-xs">

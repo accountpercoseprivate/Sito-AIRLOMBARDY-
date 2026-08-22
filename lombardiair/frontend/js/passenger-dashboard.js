@@ -1,9 +1,11 @@
 // =============================================================================
 // LOMBARDAIR - DASHBOARD PASSEGGERO REALE (passenger-dashboard.js)
+// Integrazione Scanner Laser 3D, Check-in Atomico & Nuovi Servizi Extra
 // =============================================================================
 
 import { getSupabase } from './config.js';
 import { getCurrentUser, logout } from './auth.js';
+import { startGateScanner3D } from './scanner-3d.js';
 
 // Riferimenti DOM Utente & Club Flying Lomb
 const userDisplayName = document.getElementById('user-display-name');
@@ -29,7 +31,7 @@ const listaRiscattiContainer = document.getElementById('lista-riscatti-container
 const fidsTableBody = document.getElementById('fids-table-body');
 const fidsClock = document.getElementById('fids-clock');
 
-// Stato in memoria
+// Stato locale
 let currentUser = null;
 let currentProfile = null;
 let userBookings = [];
@@ -139,7 +141,6 @@ function renderLoyaltyCard(p) {
     `;
   }
 
-  // Aggiorna anche il contatore nella sezione Benefits
   const storeMilesBadge = document.getElementById('store-user-miles');
   if (storeMilesBadge) {
     storeMilesBadge.textContent = `${p.miles_balance || 0} Miglia Disponibili`;
@@ -147,7 +148,7 @@ function renderLoyaltyCard(p) {
 }
 
 // =============================================================================
-// 2. RECUPERO PRENOTAZIONI REALI (CHECK-IN GUARD ATTIVA)
+// 2. RECUPERO PRENOTAZIONI REALI (CON CHECK-IN GUARD & BADGE EXTRA)
 // =============================================================================
 
 async function fetchUserBookings() {
@@ -195,10 +196,15 @@ async function fetchUserBookings() {
       const dataStr = dPartenza.toLocaleDateString('it-IT', { day: '2-digit', month: 'short', year: 'numeric' });
       const isCheckedIn = b.check_in_status === true;
 
+      // Elenco Completo Servizi Extra
       const extraList = [];
+      if (b.in_flight_meal) extraList.push('🍽️ Pasto Catering');
+      if (b.priority_boarding) extraList.push('🚀 Gruppo 1 Priority');
+      if (b.pet_in_cabin) extraList.push('🐾 Pet Pass');
       if (b.extra_baggage) extraList.push('🧳 Bagaglio 23kg');
       if (b.fast_track) extraList.push('⚡ Fast Track');
       if (b.lounge_access) extraList.push('🍸 Lounge VIP');
+      if (b.seat_selection_fee > 0) extraList.push('⭐ Posto Premium');
 
       return `
         <div class="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/90 shadow-card-soft hover:shadow-lg transition-all flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
@@ -254,10 +260,11 @@ async function fetchUserBookings() {
 
             <div class="flex items-center space-x-2">
               ${!isCheckedIn ? `
-                <button onclick="eseguiCheckIn('${b.codice_prenotazione}')" class="px-4 py-2.5 rounded-xl bg-lime-500 hover:bg-lime-400 text-forest-950 font-black text-xs uppercase tracking-wider shadow-cta-glow transition active:scale-95">
-                  ⚡ Esegui Check-in
+                <button onclick="eseguiCheckIn('${b.codice_prenotazione}')" class="px-4 py-2.5 rounded-xl bg-lime-500 hover:bg-lime-400 text-forest-950 font-black text-xs uppercase tracking-wider shadow-cta-glow transition active:scale-95 flex items-center space-x-1.5">
+                  <span>⚡</span>
+                  <span>Esegui Check-in</span>
                 </button>
-                <button disabled title="Effettua prima il check-in per sbloccare la carta 3D" class="px-4 py-2.5 rounded-xl bg-slate-100 text-slate-400 font-bold text-xs cursor-not-allowed border border-slate-200">
+                <button disabled title="Effettua prima il check-in con lo scanner laser per sbloccare la carta 3D" class="px-4 py-2.5 rounded-xl bg-slate-100 text-slate-400 font-bold text-xs cursor-not-allowed border border-slate-200">
                   Carta 3D 🔒
                 </button>
               ` : `
@@ -283,27 +290,26 @@ async function fetchUserBookings() {
 }
 
 // =============================================================================
-// 3. CHECK-IN ONLINE REALE (+5 XP e +50 Miglia)
+// 3. CHECK-IN ONLINE REALE CON SCANNER LASER 3D (+5 XP e +50 Miglia)
 // =============================================================================
 
-window.eseguiCheckIn = async function(codicePnr) {
-  try {
-    const sb = getSupabase();
-    showAlert(`Convalida check-in in corso per il PNR ${codicePnr}...`);
+window.eseguiCheckIn = function(codicePnr) {
+  const biglietto = userBookings.find(b => b.codice_prenotazione === codicePnr);
+  const volo = biglietto?.voli || {};
 
-    const { data, error } = await sb.rpc('esegui_checkin_online', { p_pnr: codicePnr });
-    if (error) throw error;
-
-    showAlert(`✓ Check-in completato per il biglietto ${codicePnr}! Accredito: +5 XP e +50 Miglia.`);
-    await fetchUserData();
-
-  } catch (err) {
-    showAlert(`Impossibile completare il check-in: ${err.message}`, true);
-  }
+  // Avvia la simulazione volumetrica dello scanner 3D ai gate
+  startGateScanner3D(
+    codicePnr, 
+    { origine: volo.aeroporto_origine || 'LIN', destinazione: volo.aeroporto_destinazione || 'MNZ' },
+    async () => {
+      showAlert(`✓ Check-in completato con successo per ${codicePnr}! Hai guadagnato +5 XP e +50 Miglia.`);
+      await fetchUserData();
+    }
+  );
 };
 
 // =============================================================================
-// 4. STORE RISCATTO MIGLIA & BENEFIT "FLYING LOMB"
+// 4. STORE RISCATTO MIGLIA & BENEFIT
 // =============================================================================
 
 window.richiediRiscatto = async function(tipoPremio, costoMiglia) {
@@ -330,8 +336,6 @@ window.richiediRiscatto = async function(tipoPremio, costoMiglia) {
     if (error) throw error;
 
     showAlert(`✓ Richiesta di riscatto per "${tipoPremio}" inviata con successo all'amministrazione! Miglia scalate: -${costoMiglia}.`);
-    
-    // Ricarica profilo e tabella richieste
     await fetchUserData();
     await caricaStoricoRiscatti();
 
@@ -340,9 +344,6 @@ window.richiediRiscatto = async function(tipoPremio, costoMiglia) {
   }
 };
 
-/**
- * Carica lo storico dei premi riscattati dall'utente
- */
 async function caricaStoricoRiscatti() {
   if (!listaRiscattiContainer) return;
 
@@ -397,7 +398,7 @@ async function caricaStoricoRiscatti() {
 }
 
 // =============================================================================
-// 5. TABELLONE FIDS REALE (FETCH DA DATABASE SUPABASE)
+// 5. TABELLONE FIDS REALE (DATI DA SUPABASE)
 // =============================================================================
 
 window.caricaTabelloneFIDS = async function() {
@@ -433,13 +434,19 @@ window.caricaTabelloneFIDS = async function() {
       let pulseAnim = '';
       let statusText = 'IN ORARIO';
 
-      if (v.stato === 'in_volo') {
+      if (v.stato === 'in_imbarco') {
         statusColor = 'text-lime-400 font-black';
         pulseAnim = 'animate-pulse';
         statusText = 'IMBARCO';
+      } else if (v.stato === 'in_volo') {
+        statusColor = 'text-blue-400 font-black';
+        statusText = 'IN VOLO';
       } else if (v.stato === 'atterrato') {
         statusColor = 'text-slate-500 font-semibold';
-        statusText = 'DECOLLATO';
+        statusText = 'ATTERRATO';
+      } else if (v.stato === 'in_ritardo') {
+        statusColor = 'text-amber-400 font-black';
+        statusText = `RITARDO +${v.ritardo_minuti || 15}M`;
       }
 
       return `
@@ -470,7 +477,7 @@ window.caricaTabelloneFIDS = async function() {
 };
 
 // =============================================================================
-// 6. ACQUISTO SERVIZI EXTRA SU SUPABASE
+// 6. ACQUISTO COMPLETO NUOVI SERVIZI EXTRA SU SUPABASE
 // =============================================================================
 
 window.aggiungiServizioExtra = async function(tipoServizio, prezzo) {
@@ -485,9 +492,12 @@ window.aggiungiServizioExtra = async function(tipoServizio, prezzo) {
     const sb = getSupabase();
     const updatePayload = {};
 
-    if (tipoServizio.includes('Bagaglio')) updatePayload.extra_baggage = true;
-    if (tipoServizio.includes('Fast Track')) updatePayload.fast_track = true;
-    if (tipoServizio.includes('Lounge')) updatePayload.lounge_access = true;
+    if (tipoServizio.includes('Pasto')) updatePayload.in_flight_meal = true;
+    else if (tipoServizio.includes('Gruppo 1')) updatePayload.priority_boarding = true;
+    else if (tipoServizio.includes('Animale')) updatePayload.pet_in_cabin = true;
+    else if (tipoServizio.includes('Bagaglio')) updatePayload.extra_baggage = true;
+    else if (tipoServizio.includes('Fast Track')) updatePayload.fast_track = true;
+    else if (tipoServizio.includes('Lounge')) updatePayload.lounge_access = true;
 
     const { error } = await sb
       .from('prenotazioni')

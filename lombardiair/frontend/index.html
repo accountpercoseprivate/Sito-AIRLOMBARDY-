@@ -313,7 +313,7 @@
             Recupera la tua Carta d'Imbarco 3D
           </h3>
           <p class="text-xs sm:text-sm text-slate-300 leading-relaxed font-medium max-w-xl">
-            Hai già una prenotazione confermata? Inserisci il codice PNR univoco (es. <b>LM-8K9F2</b>) ricevuto al momento dell'acquisto per renderizzare la carta d'imbarco interattiva, verificare il gate o procedere alla stampa.
+            Hai già una prenotazione confermata? Inserisci il codice PNR univoco (es. <b>LM-8K9F2</b>) per renderizzare la carta d'imbarco interattiva e verificare il gate.
           </p>
         </div>
 
@@ -340,7 +340,7 @@
   </section>
 
   <!-- ========================================================================= -->
-  <!-- 7. SEZIONE: COMUNICAZIONI OPERATIVE E NOVITÀ                              -->
+  <!-- 7. SEZIONE: COMUNICAZIONI OPERATIVE E NOVITÀ (IMMAGINI VERIFICATE)        -->
   <!-- ========================================================================= -->
   <section id="comunicazioni" class="bg-slate-50 border-t border-b border-slate-200/80 py-20">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -362,12 +362,14 @@
 
       <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
         
+        <!-- News Card 1: Apertura Nuovo Hub Monza -->
         <article class="bg-white rounded-3xl overflow-hidden border border-slate-200/80 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col group">
-          <div class="relative h-48 overflow-hidden">
+          <div class="relative h-48 overflow-hidden bg-forest-900">
             <img 
-              src="https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&w=800&q=80" 
+              src="https://images.unsplash.com/photo-1530521954074-e64f6810b32d?auto=format&fit=crop&w=800&q=80" 
               alt="Aviosuperficie Hub Monza" 
               class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=800&q=80';"
             />
             <span class="absolute top-4 left-4 bg-forest-950/80 backdrop-blur-md text-lime-400 text-[10px] font-extrabold px-3 py-1 rounded-full border border-white/10 uppercase tracking-wider">
               Infrastrutture
@@ -392,12 +394,14 @@
           </div>
         </article>
 
+        <!-- News Card 2: Scanner 3D ai Gate (IMMAGINE CORRETTA E VERIFICATA) -->
         <article class="bg-white rounded-3xl overflow-hidden border border-slate-200/80 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col group">
-          <div class="relative h-48 overflow-hidden">
+          <div class="relative h-48 overflow-hidden bg-forest-900">
             <img 
-              src="https://images.unsplash.com/photo-1519074069444-1ba4ea16e6f6?auto=format&fit=crop&w=800&q=80" 
-              alt="Scanner 3D Aeroportuale" 
+              src="https://images.unsplash.com/photo-1569154941061-e231b4725ef1?auto=format&fit=crop&w=800&q=80" 
+              alt="Scanner 3D ai Gate Aeroportuali" 
               class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1587019158091-1a103c5dd17f?auto=format&fit=crop&w=800&q=80';"
             />
             <span class="absolute top-4 left-4 bg-forest-950/80 backdrop-blur-md text-lime-400 text-[10px] font-extrabold px-3 py-1 rounded-full border border-white/10 uppercase tracking-wider">
               Tecnologia
@@ -422,8 +426,9 @@
           </div>
         </article>
 
+        <!-- News Card 3: Tariffe Agevolate Residenti -->
         <article class="bg-white rounded-3xl overflow-hidden border border-slate-200/80 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col group">
-          <div class="relative h-48 overflow-hidden">
+          <div class="relative h-48 overflow-hidden bg-forest-900">
             <img 
               src="https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=800&q=80" 
               alt="Tariffe Agevolate Voli" 
@@ -495,7 +500,9 @@
     </div>
   </footer>
 
-  <!-- SCRIPT DINAMICO -->
+  <!-- ========================================================================= -->
+  <!-- SCRIPT DINAMICO: CARICAMENTO VOLI & STATO AUTENTICAZIONE                  -->
+  <!-- ========================================================================= -->
   <script type="module">
     import { apiFetch, getSupabase } from './js/config.js';
     import { updateNavbarUI } from './js/auth.js';
@@ -538,7 +545,7 @@
         } catch (apiErr) {
           const sb = getSupabase();
           if (sb) {
-            let query = sb.from('voli').select('*').order('data_ora_partenza', { ascending: true });
+            let query = sb.from('voli').select('*').neq('stato', 'cancellato').order('data_ora_partenza', { ascending: true });
             if (filtri.origine && filtri.origine !== 'TUTTI') query = query.eq('aeroporto_origine', filtri.origine);
             if (filtri.destinazione && filtri.destinazione !== 'TUTTI') query = query.eq('aeroporto_destinazione', filtri.destinazione);
             const { data } = await query;
@@ -586,6 +593,7 @@
                     <span class="ml-2 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800">
                       ${v.stato || 'In Orario'}
                     </span>
+                    ${v.is_private_charter ? '<span class="px-2 py-0.5 text-[9px] font-black uppercase bg-amber-100 text-amber-900 border border-amber-300 rounded-md">VIP Charter</span>' : ''}
                   </div>
                   <div class="text-xs text-slate-500 font-semibold mt-0.5">
                     Data: <span class="text-slate-800">${dataStr}</span> • Orario: <span class="text-slate-800">${oraPartenza} ➔ ${oraArrivo}</span>
