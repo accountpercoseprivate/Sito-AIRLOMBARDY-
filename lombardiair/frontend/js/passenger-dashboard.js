@@ -31,6 +31,52 @@ const fidsClock = document.getElementById('fids-clock');
 let currentUser = null;
 let currentProfile = null;
 let userBookings = [];
+let fidsVoliInMemoria = [];
+
+// =============================================================================
+// CALCOLO STATI IN TEMPO REALE (ORARIO REALE MINECRAFT CET)
+// =============================================================================
+function calcolaStatoVoloLive(volo) {
+  if (volo.stato === 'cancellato') {
+    return { testo: 'CANCELLATO', classe: 'text-rose-500 font-bold', pulse: '' };
+  }
+
+  const now = new Date();
+  const dPartenza = new Date(volo.data_ora_partenza);
+  const dArrivo = new Date(volo.data_ora_arrivo);
+
+  // Sincronizza giorno con oggi per gli orari fissi giornalieri
+  const partenzaOggi = new Date(now.getFullYear(), now.getMonth(), now.getDate(), dPartenza.getHours(), dPartenza.getMinutes(), 0);
+  let arrivoOggi = new Date(now.getFullYear(), now.getMonth(), now.getDate(), dArrivo.getHours(), dArrivo.getMinutes(), 0);
+
+  if (arrivoOggi <= partenzaOggi) {
+    arrivoOggi.setDate(arrivoOggi.getDate() + 1);
+  }
+
+  const ritardo = volo.ritardo_minuti || 0;
+  const partenzaEffettiva = new Date(partenzaOggi.getTime() + ritardo * 60000);
+  const arrivoEffettivo = new Date(arrivoOggi.getTime() + ritardo * 60000);
+  const imbarcoInizio = new Date(partenzaEffettiva.getTime() - 25 * 60000); // 25 min prima
+
+  // 1. Atterrato: superato orario arrivo
+  if (now >= arrivoEffettivo) {
+    return { testo: 'ATTERRATO', classe: 'text-slate-500 font-semibold', pulse: '' };
+  }
+  // 2. In Volo: superata partenza ma prima di arrivo
+  if (now >= partenzaEffettiva) {
+    return { testo: 'IN VOLO', classe: 'text-blue-400 font-black', pulse: '' };
+  }
+  // 3. Imbarco: finestra 25 minuti prima
+  if (now >= imbarcoInizio) {
+    return { testo: 'IMBARCO', classe: 'text-lime-400 font-black', pulse: 'animate-pulse' };
+  }
+  // 4. Ritardo
+  if (ritardo > 0) {
+    return { testo: `RITARDO +${ritardo}M`, classe: 'text-amber-400 font-black', pulse: '' };
+  }
+  // 5. In Orario
+  return { testo: 'IN ORARIO', classe: 'text-slate-200 font-extrabold', pulse: '' };
+}
 
 // =============================================================================
 // 1. INIZIALIZZAZIONE & DATI REALI
@@ -41,6 +87,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   await fetchUserData();
   await caricaTabelloneFIDS();
   await caricaStoricoRiscatti();
+
+  // Ricalcola dinamicamente gli stati ogni 5 secondi
+  setInterval(() => {
+    if (fidsVoliInMemoria.length > 0) {
+      renderFidsTable(fidsVoliInMemoria);
+    }
+  }, 5000);
 });
 
 if (btnLogout) btnLogout.addEventListener('click', logout);
@@ -365,7 +418,7 @@ async function caricaStoricoRiscatti() {
 }
 
 // =============================================================================
-// 5. TABELLONE FIDS REALE DA SUPABASE
+// 5. TABELLONE FIDS REALE (TRATTA COMPLETA & STATI LIVE AUTOMATICI)
 // =============================================================================
 
 window.caricaTabelloneFIDS = async function() {
@@ -378,64 +431,55 @@ window.caricaTabelloneFIDS = async function() {
       .select('*')
       .neq('stato', 'cancellato')
       .order('data_ora_partenza', { ascending: true })
-      .limit(10);
+      .limit(15);
 
     if (error) throw error;
 
-    if (!voli || voli.length === 0) {
-      fidsTableBody.innerHTML = `
-        <tr>
-          <td colspan="5" class="py-8 text-center text-slate-500 font-mono">
-            NESSUN VOLO PROGRAMMATO SUL RADAR CENTRALE
-          </td>
-        </tr>
-      `;
-      return;
-    }
-
-    fidsTableBody.innerHTML = voli.map(v => {
-      const d = new Date(v.data_ora_partenza);
-      const orario = d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
-      
-      let statusColor = 'text-slate-300';
-      let pulseAnim = '';
-      let statusText = 'IN ORARIO';
-
-      if (v.stato === 'in_imbarco') {
-        statusColor = 'text-lime-400 font-black';
-        pulseAnim = 'animate-pulse';
-        statusText = 'IMBARCO';
-      } else if (v.stato === 'in_volo') {
-        statusColor = 'text-blue-400 font-black';
-        statusText = 'IN VOLO';
-      } else if (v.stato === 'atterrato') {
-        statusColor = 'text-slate-500 font-semibold';
-        statusText = 'ATTERRATO';
-      } else if (v.stato === 'in_ritardo') {
-        statusColor = 'text-amber-400 font-black';
-        statusText = `RITARDO +${v.ritardo_minuti || 15}M`;
-      }
-
-      return `
-        <tr class="hover:bg-slate-900/80 transition font-mono border-b border-slate-900">
-          <td class="py-3.5 px-4 text-amber-300 font-black">${orario}</td>
-          <td class="py-3.5 px-4 text-white font-black tracking-wider">
-            ${v.aeroporto_destinazione} 
-            ${v.is_private_charter ? '<span class="ml-2 px-1.5 py-0.5 text-[9px] bg-amber-400/20 text-amber-300 border border-amber-400/30 rounded">VIP CHARTER</span>' : ''}
-          </td>
-          <td class="py-3.5 px-4 text-lime-400 font-extrabold">${v.codice_volo}</td>
-          <td class="py-3.5 px-4 text-center font-black text-amber-400">G04</td>
-          <td class="py-3.5 px-4 text-right ${statusColor} ${pulseAnim} tracking-widest uppercase">
-            ${statusText}
-          </td>
-        </tr>
-      `;
-    }).join('');
+    fidsVoliInMemoria = voli || [];
+    renderFidsTable(fidsVoliInMemoria);
 
   } catch (err) {
     fidsTableBody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-red-400 font-mono text-xs">Errore radar FIDS: ${err.message}</td></tr>`;
   }
 };
+
+function renderFidsTable(voli) {
+  if (!fidsTableBody) return;
+
+  if (!voli || voli.length === 0) {
+    fidsTableBody.innerHTML = `
+      <tr>
+        <td colspan="5" class="py-8 text-center text-slate-500 font-mono">
+          NESSUN VOLO PROGRAMMATO SUL RADAR CENTRALE
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  fidsTableBody.innerHTML = voli.map(v => {
+    const d = new Date(v.data_ora_partenza);
+    const orario = d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+    const statoInfo = calcolaStatoVoloLive(v);
+
+    return `
+      <tr class="hover:bg-slate-900/80 transition font-mono border-b border-slate-900">
+        <td class="py-3.5 px-4 text-amber-300 font-black text-sm">${orario}</td>
+        <td class="py-3.5 px-4 text-white font-black tracking-wider">
+          <span class="text-white">${v.aeroporto_origine}</span>
+          <span class="text-lime-400 font-bold px-1">➔</span>
+          <span class="text-white">${v.aeroporto_destinazione}</span>
+          ${v.is_private_charter ? '<span class="ml-2 px-1.5 py-0.5 text-[9px] bg-amber-400/20 text-amber-300 border border-amber-400/30 rounded">VIP CHARTER</span>' : ''}
+        </td>
+        <td class="py-3.5 px-4 text-lime-400 font-extrabold text-sm">${v.codice_volo}</td>
+        <td class="py-3.5 px-4 text-center font-black text-amber-400">G04</td>
+        <td class="py-3.5 px-4 text-right ${statoInfo.classe} ${statoInfo.pulse} tracking-widest uppercase">
+          ${statoInfo.testo}
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
 
 // =============================================================================
 // 6. ACQUISTO SERVIZI EXTRA REALI SU SUPABASE

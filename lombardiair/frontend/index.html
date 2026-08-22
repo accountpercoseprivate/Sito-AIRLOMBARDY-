@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>LombardiAIR | Navetta Aerea Regionale Milano ⇌ Monza</title>
 
-  <!-- Google Fonts: Plus Jakarta Sans -->
+  <!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
 
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -18,6 +18,7 @@
         extend: {
           fontFamily: {
             sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
           },
           colors: {
             forest: {
@@ -59,7 +60,7 @@
           <span class="tracking-wide uppercase text-[10px]">Infrastruttura di Mobilità Regionale</span>
         </span>
         <span class="text-white/20 hidden sm:inline">|</span>
-        <span class="hidden sm:inline text-slate-400">Hub Linate • Malpensa • Monza Aerostazione</span>
+        <span class="hidden sm:inline text-slate-400">Hub Linate • Monza Aerostazione</span>
       </div>
       <div class="flex items-center space-x-4 text-slate-400 text-[11px]">
         <span class="hidden md:inline">Assistenza Passeggeri: <b>800 90 80 70</b></span>
@@ -89,7 +90,7 @@
 
       <!-- Menu Veloce Desktop con Accesso Diretto ai Voli Passeggero -->
       <nav class="hidden md:flex items-center space-x-8 text-xs font-bold text-slate-200">
-        <a href="#tabellone" class="hover:text-lime-400 transition-colors">Tabellone Voli</a>
+        <a href="#tabellone" class="hover:text-lime-400 transition-colors">Tabellone FIDS</a>
         <a href="passenger-dashboard.html" class="hover:text-lime-400 transition-colors flex items-center space-x-1.5">
           <span>I Miei Voli</span>
           <span class="w-1.5 h-1.5 rounded-full bg-lime-400"></span>
@@ -140,7 +141,7 @@
       </h1>
 
       <p class="text-base sm:text-lg text-slate-300 max-w-2xl mx-auto font-normal leading-relaxed mb-10">
-        Navette aeree ad alta frequenza tra gli aeroporti di Linate, Malpensa e l'aviosuperficie di Monza. 
+        Navette aeree ad alta frequenza tra l'aeroporto di Linate e l'aviosuperficie di Monza. 
         Tariffe regolate, imbarco prioritario e carta d'imbarco olografica 3D.
       </p>
     </div>
@@ -168,9 +169,8 @@
           </label>
           <div class="relative">
             <select id="search-origine" class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-lime-500 focus:bg-white transition-all appearance-none cursor-pointer">
-              <option value="TUTTI">Tutti gli Aeroporti di Partenza</option>
+              <option value="TUTTI">Tutti gli Hub</option>
               <option value="LIN">Milano Linate (LIN)</option>
-              <option value="MXP">Milano Malpensa (MXP)</option>
               <option value="MNZ">Monza Hub (MNZ)</option>
             </select>
             <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400">
@@ -188,7 +188,6 @@
               <option value="TUTTI">Tutte le Destinazioni</option>
               <option value="MNZ">Monza Hub (MNZ)</option>
               <option value="LIN">Milano Linate (LIN)</option>
-              <option value="MXP">Milano Malpensa (MXP)</option>
             </select>
             <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400">
               ▼
@@ -196,23 +195,12 @@
           </div>
         </div>
 
-        <div class="sm:col-span-2">
-          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
-            Data del Volo
-          </label>
-          <input 
-            type="date" 
-            id="search-data" 
-            class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-3 py-2.5 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-lime-500 focus:bg-white transition-all"
-          />
-        </div>
-
-        <div class="sm:col-span-2">
+        <div class="sm:col-span-4">
           <button 
             type="submit" 
             class="w-full py-3.5 rounded-2xl bg-lime-500 hover:bg-lime-400 active:bg-lime-600 text-forest-950 font-extrabold text-xs tracking-wider uppercase shadow-cta-glow hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 flex items-center justify-center space-x-1.5"
           >
-            <span>Cerca Voli</span>
+            <span>Filtra Tabellone</span>
             <span>→</span>
           </button>
         </div>
@@ -261,35 +249,73 @@
   </section>
 
   <!-- ========================================================================= -->
-  <!-- 5. TABELLONE VOLI OPERATIVI                                               -->
+  <!-- 5. TABELLONE FIDS NERO AEROPORTUALE (IN TEMPO REALE)                     -->
   <!-- ========================================================================= -->
   <section id="tabellone" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
-    <div class="bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden p-6 sm:p-10">
+    <div class="bg-black text-white rounded-3xl p-6 sm:p-8 border-4 border-slate-900 shadow-2xl shadow-forest-950/40 relative overflow-hidden font-mono">
       
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-6 mb-8">
-        <div>
-          <div class="inline-flex items-center space-x-2 text-xs font-extrabold text-forest-800 uppercase tracking-wider mb-1">
-            <span class="w-2 h-2 rounded-full bg-lime-500 animate-ping"></span>
-            <span>Tabellone Operativo in Tempo Reale</span>
+      <!-- Effetto CRT Scanline Monitor Aeroporto -->
+      <div class="absolute inset-0 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%)] bg-[length:100%_4px] pointer-events-none opacity-40"></div>
+
+      <!-- Testata Tabellone Aeroportuale -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-6 mb-6 border-b-2 border-slate-800 gap-4 relative z-10">
+        <div class="flex items-center space-x-3">
+          <div class="w-3.5 h-3.5 rounded-full bg-lime-400 animate-ping"></div>
+          <div>
+            <span class="text-amber-400 text-base font-black tracking-widest uppercase block">
+              PARTENZE REGIONALI • DEPARTURES
+            </span>
+            <span class="text-xs text-slate-400 tracking-wider">
+              RADAR HUB LOMBARDIA (LIN • MNZ)
+            </span>
           </div>
-          <h2 class="text-2xl font-extrabold text-slate-900 tracking-tight">Prossime Partenze Regionali</h2>
         </div>
 
         <div class="flex items-center space-x-3">
-          <button onclick="caricaTabelloneVoli()" class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition flex items-center space-x-1.5">
+          <div class="bg-slate-900 border border-slate-700 px-4 py-2 rounded-xl text-right">
+            <span class="text-[9px] text-slate-400 block uppercase tracking-widest">Orario Locale (CET)</span>
+            <span id="fids-live-clock" class="text-xl font-black text-lime-400 tracking-widest font-mono">12:00:00</span>
+          </div>
+          <button onclick="caricaTabelloneVoli()" class="px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition flex items-center space-x-1.5 border border-slate-700">
             <span>🔄</span>
-            <span>Aggiorna Orari</span>
+            <span class="hidden sm:inline">Aggiorna</span>
           </button>
-          <span class="px-3 py-1.5 rounded-full text-[11px] font-bold bg-lime-100 text-forest-900 border border-lime-300">
-            Connessione Supabase Live
-          </span>
         </div>
       </div>
 
-      <div id="lista-voli-container" class="space-y-3.5">
-        <div class="p-8 text-center text-slate-400 text-xs font-medium animate-pulse">
-          Caricamento tabellone voli dal sistema centrale...
-        </div>
+      <!-- Griglia Tabellone FIDS -->
+      <div class="overflow-x-auto relative z-10">
+        <table class="w-full text-left text-xs border-collapse">
+          <thead class="text-amber-400/90 border-b border-slate-800 uppercase tracking-widest text-[11px] font-black">
+            <tr>
+              <th class="py-3 px-4">Orario</th>
+              <th class="py-3 px-4">Tratta Operativa</th>
+              <th class="py-3 px-4">Volo</th>
+              <th class="py-3 px-4 text-center">Gate</th>
+              <th class="py-3 px-4 text-center">Tariffa / Posti</th>
+              <th class="py-3 px-4 text-center">Stato del Volo</th>
+              <th class="py-3 px-4 text-right">Prenotazione</th>
+            </tr>
+          </thead>
+          <tbody id="fids-home-body" class="divide-y divide-slate-900 font-bold text-slate-100 tracking-wide text-xs">
+            <tr>
+              <td colspan="7" class="py-12 text-center text-slate-500 font-mono animate-pulse">
+                Sincronizzazione radar voli con il database Supabase...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Footer Tabellone -->
+      <div class="mt-6 pt-4 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between text-[10px] text-slate-400 tracking-wider relative z-10">
+        <span class="flex items-center space-x-2">
+          <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+          <span>DATI SINCRONIZZATI CON IL DATABASE CENTRALE SUPABASE</span>
+        </span>
+        <span class="text-amber-400/80 mt-2 sm:mt-0 font-semibold">
+          SERVIZIO CONTINUO H24 • MINECRAFT FLIGHT NETWORK
+        </span>
       </div>
 
     </div>
@@ -340,7 +366,7 @@
   </section>
 
   <!-- ========================================================================= -->
-  <!-- 7. SEZIONE: COMUNICAZIONI OPERATIVE E NOVITÀ (IMMAGINI VERIFICATE)        -->
+  <!-- 7. SEZIONE: COMUNICAZIONI OPERATIVE E NOVITÀ                              -->
   <!-- ========================================================================= -->
   <section id="comunicazioni" class="bg-slate-50 border-t border-b border-slate-200/80 py-20">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -382,7 +408,7 @@
                 Apertura Nuovo Hub di Monza
               </h3>
               <p class="text-xs text-slate-500 leading-relaxed font-medium mb-6">
-                Inaugurata la nuova aerostazione avanzata con imbarco biometrico zero attese per il collegamento diretto verso Malpensa e Linate.
+                Inaugurata la nuova aerostazione avanzata con imbarco biometrico zero attese per il collegamento diretto verso Linate.
               </p>
             </div>
             <div>
@@ -394,7 +420,7 @@
           </div>
         </article>
 
-        <!-- News Card 2: Scanner 3D ai Gate (IMMAGINE CORRETTA E VERIFICATA) -->
+        <!-- News Card 2: Scanner 3D ai Gate -->
         <article class="bg-white rounded-3xl overflow-hidden border border-slate-200/80 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col group">
           <div class="relative h-48 overflow-hidden bg-forest-900">
             <img 
@@ -501,13 +527,69 @@
   </footer>
 
   <!-- ========================================================================= -->
-  <!-- SCRIPT DINAMICO: CARICAMENTO VOLI & STATO AUTENTICAZIONE                  -->
+  <!-- MOTORE CALCOLO STATI LIVE & TABELLONE FIDS                                -->
   <!-- ========================================================================= -->
   <script type="module">
     import { apiFetch, getSupabase } from './js/config.js';
     import { updateNavbarUI } from './js/auth.js';
 
-    const container = document.getElementById('lista-voli-container');
+    const fidsBody = document.getElementById('fids-home-body');
+    const fidsClock = document.getElementById('fids-live-clock');
+    let listaVoliInMemoria = [];
+
+    // Orologio Digitale CET Live
+    function updateClock() {
+      if (fidsClock) {
+        fidsClock.textContent = new Date().toLocaleTimeString('it-IT', { hour12: false });
+      }
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // =========================================================================
+    // CALCOLO AUTOMATICO DEGLI STATI IN TEMPO REALE (MINECRAFT LIVE CLOCK)
+    // =========================================================================
+    function calcolaStatoVoloLive(volo) {
+      if (volo.stato === 'cancellato') {
+        return { testo: 'CANCELLATO', classe: 'text-rose-500 font-black' };
+      }
+
+      const now = new Date();
+      const dPartenza = new Date(volo.data_ora_partenza);
+      const dArrivo = new Date(volo.data_ora_arrivo);
+
+      // Sincronizza orario di decollo e atterraggio con la giornata odierna
+      const partenzaOggi = new Date(now.getFullYear(), now.getMonth(), now.getDate(), dPartenza.getHours(), dPartenza.getMinutes(), 0);
+      let arrivoOggi = new Date(now.getFullYear(), now.getMonth(), now.getDate(), dArrivo.getHours(), dArrivo.getMinutes(), 0);
+
+      if (arrivoOggi <= partenzaOggi) {
+        arrivoOggi.setDate(arrivoOggi.getDate() + 1);
+      }
+
+      const ritardo = volo.ritardo_minuti || 0;
+      const partenzaEffettiva = new Date(partenzaOggi.getTime() + ritardo * 60000);
+      const arrivoEffettivo = new Date(arrivoOggi.getTime() + ritardo * 60000);
+      const imbarcoInizio = new Date(partenzaEffettiva.getTime() - 25 * 60000); // 25 min prima del decollo
+
+      // 1. Atterrato: orario di arrivo superato
+      if (now >= arrivoEffettivo) {
+        return { testo: 'ATTERRATO', classe: 'text-slate-500 font-bold' };
+      }
+      // 2. In Volo: oltre la partenza ma prima dell'atterraggio
+      if (now >= partenzaEffettiva) {
+        return { testo: 'IN VOLO', classe: 'text-sky-400 font-black tracking-widest' };
+      }
+      // 3. Imbarco: finestra 25 minuti prima
+      if (now >= imbarcoInizio) {
+        return { testo: 'IMBARCO', classe: 'text-lime-400 font-black animate-pulse tracking-widest' };
+      }
+      // 4. Ritardo
+      if (ritardo > 0) {
+        return { testo: `RITARDO +${ritardo}M`, classe: 'text-amber-400 font-black tracking-widest' };
+      }
+      // 5. In Orario
+      return { testo: 'IN ORARIO', classe: 'text-slate-200 font-extrabold tracking-widest' };
+    }
 
     document.addEventListener('DOMContentLoaded', async () => {
       try {
@@ -516,128 +598,124 @@
         console.warn('Inizializzazione navbar:', e);
       }
       await caricaTabelloneVoli();
+
+      // Ricalcola dinamicamente gli stati a schermo ogni 5 secondi senza dover ricaricare la pagina
+      setInterval(() => {
+        if (listaVoliInMemoria.length > 0) {
+          renderFidsTable(listaVoliInMemoria);
+        }
+      }, 5000);
     });
 
     window.caricaTabelloneVoli = async function(filtri = {}) {
-      if (!container) return;
-
-      container.innerHTML = `
-        <div class="p-8 text-center text-slate-400 text-xs font-medium">
-          <span class="inline-block animate-spin mr-2">⚙️</span>
-          Sincronizzazione orari con il database Supabase...
-        </div>
-      `;
+      if (!fidsBody) return;
 
       try {
-        let endpoint = '/voli';
-        const params = new URLSearchParams();
+        const sb = getSupabase();
+        let query = sb.from('voli').select('*').neq('stato', 'cancellato').order('data_ora_partenza', { ascending: true });
 
-        if (filtri.origine && filtri.origine !== 'TUTTI') params.append('origine', filtri.origine);
-        if (filtri.destinazione && filtri.destinazione !== 'TUTTI') params.append('destinazione', filtri.destinazione);
-        if (filtri.data) params.append('data', filtri.data);
+        if (filtri.origine && filtri.origine !== 'TUTTI') query = query.eq('aeroporto_origine', filtri.origine);
+        if (filtri.destinazione && filtri.destinazione !== 'TUTTI') query = query.eq('aeroporto_destinazione', filtri.destinazione);
 
-        const queryString = params.toString();
-        if (queryString) endpoint += `?${queryString}`;
+        const { data: voli, error } = await query;
+        if (error) throw error;
 
-        let voli = [];
-        try {
-          voli = await apiFetch(endpoint);
-        } catch (apiErr) {
-          const sb = getSupabase();
-          if (sb) {
-            let query = sb.from('voli').select('*').neq('stato', 'cancellato').order('data_ora_partenza', { ascending: true });
-            if (filtri.origine && filtri.origine !== 'TUTTI') query = query.eq('aeroporto_origine', filtri.origine);
-            if (filtri.destinazione && filtri.destinazione !== 'TUTTI') query = query.eq('aeroporto_destinazione', filtri.destinazione);
-            const { data } = await query;
-            voli = data || [];
-          }
-        }
-
-        if (!voli || voli.length === 0) {
-          container.innerHTML = `
-            <div class="p-12 text-center bg-slate-50 border border-slate-200/80 rounded-2xl">
-              <div class="w-12 h-12 mx-auto rounded-full bg-slate-200/60 flex items-center justify-center text-slate-500 font-bold mb-3">
-                ✈️
-              </div>
-              <h4 class="text-sm font-extrabold text-slate-800">Nessuna navetta programmata con i filtri selezionati</h4>
-              <p class="text-xs text-slate-400 mt-1">Gli operatori aggiornano costantemente le tratte. Modifica i parametri di ricerca o riprova tra poco.</p>
-            </div>
-          `;
-          return;
-        }
-
-        container.innerHTML = voli.map(v => {
-          const dPartenza = new Date(v.data_ora_partenza);
-          const dArrivo = new Date(v.data_ora_arrivo);
-
-          const oraPartenza = dPartenza.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
-          const oraArrivo = dArrivo.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
-          const dataStr = dPartenza.toLocaleDateString('it-IT', { day: '2-digit', month: 'short', year: 'numeric' });
-
-          const isSoldOut = v.posti_disponibili <= 0;
-
-          return `
-            <div class="p-4 sm:p-5 rounded-2xl bg-slate-50 hover:bg-white border border-slate-200/80 hover:border-lime-500/40 hover:shadow-md transition-all flex flex-col lg:flex-row items-center justify-between gap-4">
-              
-              <div class="flex items-center space-x-4 w-full lg:w-auto">
-                <div class="w-14 h-14 rounded-2xl bg-forest-900 text-lime-400 flex flex-col items-center justify-center flex-shrink-0 shadow-sm">
-                  <span class="text-[9px] font-extrabold tracking-widest uppercase opacity-70">VOLO</span>
-                  <span class="text-xs font-black font-mono">${v.codice_volo}</span>
-                </div>
-
-                <div>
-                  <div class="flex items-center space-x-2">
-                    <span class="text-base font-extrabold text-slate-900">${v.aeroporto_origine}</span>
-                    <span class="text-lime-600 font-bold">➔</span>
-                    <span class="text-base font-extrabold text-slate-900">${v.aeroporto_destinazione}</span>
-                    <span class="ml-2 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800">
-                      ${v.stato || 'In Orario'}
-                    </span>
-                    ${v.is_private_charter ? '<span class="px-2 py-0.5 text-[9px] font-black uppercase bg-amber-100 text-amber-900 border border-amber-300 rounded-md">VIP Charter</span>' : ''}
-                  </div>
-                  <div class="text-xs text-slate-500 font-semibold mt-0.5">
-                    Data: <span class="text-slate-800">${dataStr}</span> • Orario: <span class="text-slate-800">${oraPartenza} ➔ ${oraArrivo}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div class="flex items-center justify-between lg:justify-end space-x-6 w-full lg:w-auto pt-3 lg:pt-0 border-t lg:border-t-0 border-slate-200">
-                <div class="text-left lg:text-right">
-                  <span class="text-[10px] font-bold text-slate-400 block uppercase">Disponibilità: <b class="${v.posti_disponibili <= 5 ? 'text-red-500' : 'text-forest-800'}">${v.posti_disponibili}/${v.posti_totali} posti</b></span>
-                  <span class="text-xl font-black font-mono text-forest-950">€ ${parseFloat(v.prezzo_base).toFixed(2)}</span>
-                </div>
-
-                ${isSoldOut ? `
-                  <button disabled class="px-5 py-2.5 rounded-xl bg-slate-200 text-slate-400 font-bold text-xs cursor-not-allowed">
-                    Sold Out
-                  </button>
-                ` : `
-                  <a href="booking.html?volo_id=${v.id}" class="px-6 py-2.5 rounded-xl bg-lime-500 hover:bg-lime-400 text-forest-950 font-extrabold text-xs uppercase tracking-wider shadow-sm hover:shadow-md transition-all">
-                    Prenota
-                  </a>
-                `}
-              </div>
-
-            </div>
-          `;
-        }).join('');
+        listaVoliInMemoria = voli || [];
+        renderFidsTable(listaVoliInMemoria);
 
       } catch (err) {
-        container.innerHTML = `
-          <div class="p-8 text-center text-slate-500 text-xs font-medium">
-            Impossibile aggiornare i voli in questo momento (${err.message}). Riprova a breve.
-          </div>
+        fidsBody.innerHTML = `
+          <tr>
+            <td colspan="7" class="py-8 text-center text-red-400 font-mono text-xs">
+              Impossibile collegarsi al radar voli (${err.message}).
+            </td>
+          </tr>
         `;
       }
     };
+
+    function renderFidsTable(voli) {
+      if (!fidsBody) return;
+
+      if (!voli || voli.length === 0) {
+        fidsBody.innerHTML = `
+          <tr>
+            <td colspan="7" class="py-12 text-center text-slate-500 font-mono">
+              NESSUNA NAVETTA PROGRAMMATA CON I FILTRI SELEZIONATI
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      fidsBody.innerHTML = voli.map(v => {
+        const dPartenza = new Date(v.data_ora_partenza);
+        const dArrivo = new Date(v.data_ora_arrivo);
+
+        const oraPartenza = dPartenza.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+        const oraArrivo = dArrivo.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+
+        const statoInfo = calcolaStatoVoloLive(v);
+        const isSoldOut = v.posti_disponibili <= 0;
+
+        return `
+          <tr class="hover:bg-slate-900/80 transition font-mono border-b border-slate-900">
+            <!-- Orario -->
+            <td class="py-4 px-4 text-amber-300 font-black text-sm">
+              ${oraPartenza} <span class="text-slate-500 text-xs font-normal">➔ ${oraArrivo}</span>
+            </td>
+
+            <!-- Tratta Operativa Completa -->
+            <td class="py-4 px-4">
+              <span class="text-white font-black text-sm">${v.aeroporto_origine}</span>
+              <span class="text-lime-400 font-black px-1">➔</span>
+              <span class="text-white font-black text-sm">${v.aeroporto_destinazione}</span>
+              ${v.is_private_charter ? '<span class="ml-2 px-1.5 py-0.5 text-[9px] bg-amber-400/20 text-amber-300 border border-amber-400/30 rounded">VIP</span>' : ''}
+            </td>
+
+            <!-- Codice Volo -->
+            <td class="py-4 px-4 text-lime-400 font-extrabold text-sm">
+              ${v.codice_volo}
+            </td>
+
+            <!-- Gate -->
+            <td class="py-4 px-4 text-center font-black text-amber-400">
+              G04
+            </td>
+
+            <!-- Tariffa & Posti -->
+            <td class="py-4 px-4 text-center">
+              <span class="text-white font-black">€ ${parseFloat(v.prezzo_base).toFixed(2)}</span>
+              <span class="block text-[10px] ${v.posti_disponibili <= 5 ? 'text-red-400' : 'text-slate-400'} font-bold">
+                ${v.posti_disponibili}/${v.posti_totali} posti
+              </span>
+            </td>
+
+            <!-- Stato Live -->
+            <td class="py-4 px-4 text-center ${statoInfo.classe} uppercase">
+              ${statoInfo.testo}
+            </td>
+
+            <!-- Azione Prenota -->
+            <td class="py-4 px-4 text-right">
+              ${isSoldOut ? `
+                <span class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-500 text-[11px] font-bold">Sold Out</span>
+              ` : `
+                <a href="booking.html?volo_id=${v.id}" class="inline-block px-4 py-1.5 rounded-xl bg-lime-500 hover:bg-lime-400 active:bg-lime-600 text-forest-950 font-black text-xs uppercase tracking-wider shadow-sm transition">
+                  Prenota
+                </a>
+              `}
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
 
     window.filtraVoli = function(e) {
       e.preventDefault();
       const origine = document.getElementById('search-origine').value;
       const destinazione = document.getElementById('search-destinazione').value;
-      const data = document.getElementById('search-data').value;
-
-      caricaTabelloneVoli({ origine, destinazione, data });
+      caricaTabelloneVoli({ origine, destinazione });
     };
 
     window.apriCartaImbarco = function() {
